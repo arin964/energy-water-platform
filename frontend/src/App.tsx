@@ -13,6 +13,7 @@ import { AdminPage } from './pages/AdminPage';
 import { ProfilePage } from './pages/ProfilePage';
 import DataImportPage from './pages/DataImportPage';
 import './styles/globals.css';
+import NotificationsPage from './pages/NotificationsPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isLoggedIn = localStorage.getItem('user');
@@ -43,6 +44,14 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+  path="/notifications"
+  element={
+    <ProtectedRoute>
+      <NotificationsPage />
+    </ProtectedRoute>
+  }
+/>
         <Route
           path="/water"
           element={

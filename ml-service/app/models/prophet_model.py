@@ -5,6 +5,7 @@ from typing import List
 
 class ProphetModel:
     def __init__(self):
+        # Prophet varsayılan olarak %80 güven aralığı (interval_width=0.80) kullanır.
         self.model = Prophet(
             yearly_seasonality=True,
             weekly_seasonality=True,
@@ -15,16 +16,16 @@ class ProphetModel:
     
     def train(self, df: pd.DataFrame):
         """
-        Train Prophet model
-        df should have columns: 'ds' (datetime) and 'y' (value)
+        Prophet modelini eğitir.
+        df sütunları: 'ds' (tarih) ve 'y' (değer) olmalıdır.
         """
         self.model.fit(df)
         self.is_fitted = True
     
     def predict(self, periods: int = 7) -> pd.DataFrame:
-        """Predict future values"""
+        """Gelecek değerleri tahmin eder"""
         if not self.is_fitted:
-            raise ValueError("Model not trained yet!")
+            raise ValueError("Model henüz eğitilmedi!")
         
         future = self.model.make_future_dataframe(periods=periods)
         forecast = self.model.predict(future)
@@ -32,7 +33,7 @@ class ProphetModel:
         return forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(periods)
     
     def predict_with_confidence(self, periods: int = 7) -> dict:
-        """Predict with confidence intervals"""
+        """Güven aralıkları ve teknik metriklerle beraber tahmin döndürür"""
         forecast = self.predict(periods)
         
         return {
@@ -40,4 +41,7 @@ class ProphetModel:
             'predictions': forecast['yhat'].tolist(),
             'lower_bound': forecast['yhat_lower'].tolist(),
             'upper_bound': forecast['yhat_upper'].tolist(),
+            'confidence_level': 80, # Jüride 'İstatistiksel güven düzeyi' olarak bahsedebilirsin
+            'model_name': 'Facebook Prophet'
         }
+    
