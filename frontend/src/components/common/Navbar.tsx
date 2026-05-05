@@ -61,7 +61,8 @@ const Navbar: React.FC = () => {
   };
 
   const handleSettingsClick = () => {
-    navigate('/settings');
+    // BURASI DEĞİŞTİ
+    navigate('/system-settings');
     setShowAdminMenu(false);
   };
 

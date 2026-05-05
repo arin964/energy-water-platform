@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
   Zap, 
@@ -12,9 +12,9 @@ import {
   Upload
 } from 'lucide-react';
 
-
 const Sidebar: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const menuItems = [
     { path: '/', icon: Home, label: 'Dashboard' },
@@ -33,12 +33,21 @@ const Sidebar: React.FC = () => {
 
   return (
     <div className="h-screen w-64 bg-gray-900 text-white p-4 flex flex-col">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-primary-400">Enerji-Su Platform</h1>
-        <p className="text-sm text-gray-400 mt-1">AI Destekli Optimizasyon</p>
+      
+      {/* Tıklanabilir Logo Bölümü */}
+      <div 
+        onClick={() => navigate('/welcome')} 
+        className="mb-8 cursor-pointer group select-none"
+      >
+        <h1 className="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors">
+          Enerji-Su Platformu
+        </h1>
+        <p className="text-[10px] text-blue-400/70 font-medium tracking-wider uppercase">
+          AI Destekli Optimizasyon
+        </p>
       </div>
 
-      <nav className="flex-1">
+      <nav className="flex-1 overflow-y-auto">
         <ul className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -50,21 +59,23 @@ const Sidebar: React.FC = () => {
                   to={item.path}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-primary-600 text-white'
+                      ? 'bg-blue-600 text-white'
                       : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                   }`}
                 >
                   <Icon size={20} />
-                  <span>{item.label}</span>
+                  <span className="font-medium">{item.label}</span>
                 </Link>
               </li>
             );
           })}
         </ul>
 
-        {/* Admin Bölümü */}
-        <div className="mt-8 pt-8 border-t border-gray-700">
-          <p className="text-xs font-semibold text-gray-500 uppercase px-4 mb-3">Yönetim</p>
+        {/* Yönetim Bölümü */}
+        <div className="mt-8 pt-8 border-t border-gray-800">
+          <p className="text-xs font-semibold text-gray-500 uppercase px-4 mb-3 tracking-widest">
+            Yönetim
+          </p>
           <ul className="space-y-2">
             {adminItems.map((item) => {
               const Icon = item.icon;
@@ -76,12 +87,12 @@ const Sidebar: React.FC = () => {
                     to={item.path}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive
-                        ? 'bg-primary-600 text-white'
+                        ? 'bg-blue-600 text-white'
                         : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                     }`}
                   >
                     <Icon size={20} />
-                    <span>{item.label}</span>
+                    <span className="font-medium">{item.label}</span>
                   </Link>
                 </li>
               );
@@ -90,10 +101,11 @@ const Sidebar: React.FC = () => {
         </div>
       </nav>
 
+      {/* Alt Bilgi */}
       <div className="mt-auto pt-4 border-t border-gray-800">
-        <div className="text-xs text-gray-500">
+        <div className="text-[10px] text-gray-500 flex justify-between items-center px-2">
           <p>© 2025 Energy-Water</p>
-          <p className="mt-1">Version 1.0.0</p>
+          <p>v1.0.0</p>
         </div>
       </div>
     </div>
