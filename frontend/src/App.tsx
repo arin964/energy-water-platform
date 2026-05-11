@@ -17,6 +17,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import { SettingsProvider } from './pages/SettingsPage.tsx';
 import './styles/globals.css';
 import LandingPage from './pages/LandingPage';
+import ExplorePage from './pages/ExplorePage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isLoggedIn = localStorage.getItem('user');
@@ -31,6 +32,7 @@ const App: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
 
           {/* Protected Routes */}
+          <Route path="/explore" element={<ExplorePage />} />
           <Route path="/welcome" element={<LandingPage />} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/energy" element={<ProtectedRoute><EnergyPage /></ProtectedRoute>} />

@@ -1,85 +1,104 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Droplets, BarChart3, ShieldCheck, ArrowRight, BrainCircuit } from 'lucide-react';
+import { 
+  ArrowRight, 
+  Zap, 
+  Droplet, 
+  ShieldCheck, 
+  Cpu, 
+  Globe, 
+  LineChart 
+} from 'lucide-react';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white font-sans selection:bg-blue-500/30">
-      {/* Hero Section */}
-      <nav className="p-6 flex justify-between items-center max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#0a0f1e] text-white flex flex-col font-sans selection:bg-blue-500/30 overflow-x-hidden">
+      
+      {/* Navigasyon */}
+      <nav className="p-6 flex justify-between items-center max-w-7xl mx-auto w-full z-10">
         <div className="flex flex-col">
-          <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-            Enerji-Su Platformu
-          </span>
-          <span className="text-[10px] text-gray-500 tracking-widest uppercase">Nexus v1.0.0</span>
+          <h2 className="text-xl font-bold tracking-tight text-blue-400">Enerji-Su Platformu</h2>
+          <span className="text-[10px] text-gray-500 uppercase tracking-[0.2em]">Nexus V1.0.0</span>
         </div>
         <button 
-          onClick={() => navigate('/')}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-full text-sm font-bold transition-all shadow-lg shadow-blue-900/20"
+          onClick={() => navigate('/login')}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full text-sm font-semibold transition-all shadow-lg shadow-blue-600/20 active:scale-95"
         >
           Sisteme Giriş
         </button>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 pt-20 pb-32">
-        <div className="text-center mb-24">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium mb-6">
-            <BrainCircuit size={14} /> Yapay Zeka Destekli Kaynak Yönetimi
-          </div>
-          <h1 className="text-6xl md:text-7xl font-extrabold mb-8 tracking-tight">
-            Geleceğin Enerjisini <br />
-            <span className="text-blue-500">Bugünden Optimize Edin</span>
-          </h1>
-          <p className="text-gray-400 text-xl max-w-2xl mx-auto leading-relaxed">
-            Nexus, enerji üretimi ve su tüketim verilerini yapay sinir ağları ile analiz ederek 
-            maksimum verimlilik ve minimum kayıp sağlar.
-          </p>
-          <div className="mt-10 flex justify-center gap-4">
-            <button 
-              onClick={() => navigate('/')}
-              className="px-8 py-4 bg-white text-[#0f172a] font-bold rounded-2xl hover:bg-blue-50 transition-all flex items-center gap-2 group"
-            >
-              Platformu Keşfet <ArrowRight className="group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
+      <main className="flex-1 flex flex-col items-center pt-20 px-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium mb-8 animate-pulse">
+          <Cpu size={14} />
+          <span>Yapay Sinir Ağları Destekli Yeni Nesil İzleme</span>
         </div>
 
-        {/* Özellikler Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-gray-800/30 border border-gray-700/50 p-8 rounded-3xl hover:border-blue-500/50 transition-colors group">
-            <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <Zap className="text-blue-400" />
-            </div>
-            <h3 className="text-xl font-bold mb-4 text-white">Akıllı Enerji</h3>
-            <p className="text-gray-500 leading-relaxed">Güneş radyasyonu ve hava durumu verileriyle üretim tahminlemesi.</p>
-          </div>
+        <h1 className="text-5xl md:text-7xl font-extrabold text-center mb-6 tracking-tight leading-tight">
+          Geleceğin Enerjisini <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+            Bugünden Optimize Edin
+          </span>
+        </h1>
 
-          <div className="bg-gray-800/30 border border-gray-700/50 p-8 rounded-3xl hover:border-green-500/50 transition-colors group">
-            <div className="w-12 h-12 bg-green-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <Droplets className="text-green-400" />
-            </div>
-            <h3 className="text-xl font-bold mb-4 text-white">Su Yönetimi</h3>
-            <p className="text-gray-500 leading-relaxed">Baraj doluluk oranları ve tüketim trendlerinin gerçek zamanlı takibi.</p>
-          </div>
+        <p className="max-w-2xl text-center text-gray-400 text-lg md:text-xl mb-12 leading-relaxed">
+          Nexus; karmaşık veri setlerini analiz ederek enerji ve su kaynaklarınızı 
+          maksimum verimlilikle yönetmenizi sağlar.
+        </p>
 
-          <div className="bg-gray-800/30 border border-gray-700/50 p-8 rounded-3xl hover:border-purple-500/50 transition-colors group">
-            <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <BarChart3 className="text-purple-400" />
-            </div>
-            <h3 className="text-xl font-bold mb-4 text-white">Derin Analiz</h3>
-            <p className="text-gray-500 leading-relaxed">Geçmiş verilerden öğrenen algoritmalarla stratejik raporlama.</p>
+        {/* YÖNLENDİRME DEĞİŞTİ: Artık /explore rotasına gidiyor */}
+        <button 
+          onClick={() => navigate('/explore')} 
+          className="group relative flex items-center gap-3 bg-white text-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all active:scale-95 shadow-xl shadow-white/5"
+        >
+          Platformu Keşfet
+          <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+        </button>
+
+        {/* Alt Özellikler */}
+        <section className="w-full max-w-7xl mx-auto py-32 px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <FeatureCard 
+              icon={<Zap className="text-yellow-400" />}
+              title="Akıllı Enerji"
+              desc="Solar radyasyon ve üretim trendlerini gerçek zamanlı takip edin."
+            />
+            <FeatureCard 
+              icon={<Droplet className="text-blue-400" />}
+              title="Su Optimizasyonu"
+              desc="Baraj doluluk oranları ve tüketim tahminleri ile planlama yapın."
+            />
+            <FeatureCard 
+              icon={<LineChart className="text-purple-400" />}
+              title="Yapay Zeka Analizi"
+              desc="Derin öğrenme modelleri ile olası kesintileri önceden görün."
+            />
+            <FeatureCard 
+              icon={<ShieldCheck className="text-green-400" />}
+              title="Kritik Uyarılar"
+              desc="Anlık bildirim sistemi ile riskli durumları saniyeler içinde yönetin."
+            />
           </div>
-        </div>
+        </section>
       </main>
 
-      {/* BURASI DÜZELDİ: footer etiketi eklendi */}
-      <footer className="border-t border-gray-800 py-12 text-center">
-        <p className="text-gray-600 text-sm">© 2026 Nexus Energy-Water Management Platform</p>
+      <footer className="p-8 border-t border-white/5 text-center text-gray-600 text-sm">
+        <p>© 2026 Nexus Energy-Water Platform. Tüm hakları saklıdır.</p>
       </footer>
     </div>
   );
 };
+
+const FeatureCard = ({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) => (
+  <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-blue-500/50 transition-all hover:bg-white/[0.07] group cursor-default">
+    <div className="mb-4 p-3 bg-white/5 inline-block rounded-2xl group-hover:scale-110 transition-transform">
+      {icon}
+    </div>
+    <h4 className="text-xl font-semibold mb-3">{title}</h4>
+    <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
+  </div>
+);
 
 export default LandingPage;

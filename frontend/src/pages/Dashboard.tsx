@@ -1,14 +1,46 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/common/Sidebar';
 import Navbar from '../components/common/Navbar';
 import Card from '../components/common/Card';
 import EnergyChart from '../components/charts/EnergyChart';
 import { Zap, Droplet, TrendingUp, AlertTriangle } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { tr } from 'date-fns/locale';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  // Mock data
+  
+  // Uyarıların ne zaman oluşturulduğunu tutan mock veriler (Gerçek projede API'den gelecektir)
+  const [alerts, setAlerts] = useState([
+    { 
+      type: 'warning', 
+      message: 'Baraj seviyesi %20 altına düşebilir', 
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 saat önce
+    },
+    { 
+      type: 'info', 
+      message: 'Yeni tahmin modeli güncellendi', 
+      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000) // 5 saat önce
+    },
+    { 
+      type: 'critical', 
+      message: 'Enerji üretimi beklenenin altında', 
+      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 gün önce
+    },
+  ]);
+
+  // Zamanın her dakika otomatik güncellenmesi için state tetikleyici
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 60000); // Her 60 saniyede bir arayüzü tazeler
+
+    return () => clearInterval(timer);
+  }, []);
+
   const mockChartData = [
     { date: '01.01', energy: 45, solar: 650 },
     { date: '02.01', energy: 52, solar: 700 },
@@ -70,17 +102,13 @@ const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <EnergyChart data={mockChartData} />
             
-            <div className="card">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
                 Son Uyarılar
               </h3>
               
               <div className="space-y-3">
-                {[
-                  { type: 'warning', message: 'Baraj seviyesi %20 altına düşebilir', time: '2 saat önce' },
-                  { type: 'info', message: 'Yeni tahmin modeli güncellendi', time: '5 saat önce' },
-                  { type: 'critical', message: 'Enerji üretimi beklenenin altında', time: '1 gün önce' },
-                ].map((alert, index) => (
+                {alerts.map((alert, index) => (
                   <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div className={`w-2 h-2 rounded-full mt-2 ${
                       alert.type === 'critical' ? 'bg-red-500' :
@@ -88,7 +116,9 @@ const Dashboard: React.FC = () => {
                     }`} />
                     <div className="flex-1">
                       <p className="text-sm text-gray-800 dark:text-white">{alert.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">{alert.time}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formatDistanceToNow(alert.timestamp, { addSuffix: true, locale: tr })}
+                      </p>
                     </div>
                   </div>
                 ))}
