@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import energyRoutes from './energy';
 import waterRoutes from './water';
+import damRoutes from './dams';
 import forecastRoutes from './forecast';
 import optimizationRoutes from './optimization';
 import alertRoutes from './alert';
@@ -28,6 +29,7 @@ router.get('/health', (_req, res) => {
 // API routes
 router.use('/energy', energyRoutes);
 router.use('/water', waterRoutes);
+router.use('/dams', damRoutes);
 router.use('/forecast', forecastRoutes);
 router.use('/optimization', optimizationRoutes);
 router.use('/alerts', alertRoutes);
