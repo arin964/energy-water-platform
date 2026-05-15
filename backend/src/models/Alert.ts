@@ -79,6 +79,7 @@ Alert.init(
     sequelize,
     tableName: 'alerts',
     timestamps: false,
+    underscored: true,
     indexes: [
       {
         fields: ['type'],
@@ -87,7 +88,7 @@ Alert.init(
         fields: ['category'],
       },
       {
-        fields: ['isActive'],
+        fields: ['is_active'],
       },
     ],
   }

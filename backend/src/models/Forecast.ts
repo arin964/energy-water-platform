@@ -66,12 +66,13 @@ Forecast.init(
     sequelize,
     tableName: 'forecasts',
     timestamps: false,
+    underscored: true,
     indexes: [
       {
         fields: ['type'],
       },
       {
-        fields: ['targetDate'],
+        fields: ['target_date'],
       },
     ],
   }

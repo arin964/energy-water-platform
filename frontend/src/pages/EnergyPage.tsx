@@ -1,31 +1,103 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Layout from '../components/common/Layout';
 import { TrendingUp } from 'lucide-react';
+import { energyService } from '../services/energyService';
 
-interface EnergyData {
+interface ChartData {
   date: string;
   production: number;
   solar: number;
 }
 
 const EnergyPage: React.FC = () => {
-  const [energyData] = useState<EnergyData[]>([
-    { date: '01.10', production: 450, solar: 680 },
-    { date: '02.10', production: 520, solar: 750 },
-    { date: '03.10', production: 480, solar: 670 },
-    { date: '04.10', production: 610, solar: 800 },
-    { date: '05.10', production: 550, solar: 720 },
-    { date: '06.10', production: 580, solar: 760 },
-    { date: '07.10', production: 630, solar: 810 },
-  ]);
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [energyStats] = useState([
-    { label: 'Toplam Üretim (Bu Ay)', value: '3,820 MWh', change: '+12.5%' },
-    { label: 'Ortalama Günlük', value: '546 MWh', change: '+5.3%' },
-    { label: 'Pik Üretim', value: '630 MWh', change: '07.10' },
-    { label: 'Solar Payı', value: '65%', change: '+8.1%' },
-  ]);
+  // API'den 7 günlük veri çek
+  useEffect(() => {
+    const fetchEnergyData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Son 7 günün tarihini hesapla
+        const endDate = new Date();
+        const startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 6); // 7 gün (bugün dahil)
+
+        // Tarih formatı: YYYY-MM-DD
+        const start = startDate.toISOString().split('T')[0];
+        const end = endDate.toISOString().split('T')[0];
+
+        // API'den veri çek
+        const data = await energyService.getAll({ startDate: start, endDate: end });
+
+        // Veriyi grafik için uygun formata dönüştür
+        const formattedData: ChartData[] = data.map((item: any) => {
+          const date = new Date(item.timestamp);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          
+          return {
+            date: `${day}.${month}.${year}`,
+            production: Math.round(item.energyProduced),
+            solar: Math.round(item.solarRadiation),
+          };
+        });
+
+        setChartData(formattedData);
+      } catch (err) {
+        console.error('Enerji verisi çekilirken hata:', err);
+        setError('Enerji verisi yüklenemedi. Lütfen daha sonra tekrar deneyin.');
+        // Fallback verisi ayarla (test için)
+        setChartData([
+          { date: '08.05.2026', production: 450, solar: 680 },
+          { date: '09.05.2026', production: 520, solar: 750 },
+          { date: '10.05.2026', production: 480, solar: 670 },
+          { date: '11.05.2026', production: 610, solar: 800 },
+          { date: '12.05.2026', production: 550, solar: 720 },
+          { date: '13.05.2026', production: 580, solar: 760 },
+          { date: '14.05.2026', production: 630, solar: 810 },
+          { date: '15.05.2026', production: 600, solar: 790 },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEnergyData();
+  }, []);
+
+  // İstatistikleri chartData'dan hesapla
+  const getStats = () => {
+    if (chartData.length === 0) {
+      return [
+        { label: 'Toplam Üretim (7 Gün)', value: '0 MWh', change: '-' },
+        { label: 'Ortalama Günlük', value: '0 MWh', change: '-' },
+        { label: 'Pik Üretim', value: '0 MWh', change: '-' },
+        { label: 'Solar Payı', value: '0%', change: '-' },
+      ];
+    }
+
+    const totalProduction = chartData.reduce((sum, item) => sum + item.production, 0);
+    const avgProduction = Math.round(totalProduction / chartData.length);
+    const maxProduction = Math.max(...chartData.map(item => item.production));
+    const maxDate = chartData.find(item => item.production === maxProduction)?.date || '-';
+    const avgSolar = Math.round(chartData.reduce((sum, item) => sum + item.solar, 0) / chartData.length);
+    const solarPercentage = Math.round((totalProduction / (totalProduction + 900 + 440)) * 100); // Basit hesap
+
+    return [
+      { label: 'Toplam Üretim (7 Gün)', value: `${totalProduction} MWh`, change: `+${totalProduction}` },
+      { label: 'Ortalama Günlük', value: `${avgProduction} MWh`, change: `+${avgProduction}` },
+      { label: 'Pik Üretim', value: `${maxProduction} MWh`, change: maxDate },
+      { label: 'Solar Payı', value: `${solarPercentage}%`, change: `+${solarPercentage}%` },
+    ];
+  };
+
+  const energyStats = getStats();
 
   const [energyBySource] = useState([
     { source: 'Solar', value: 2480, percentage: 65 },
@@ -38,100 +110,118 @@ const EnergyPage: React.FC = () => {
       <div className="p-8 max-w-7xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Enerji Yönetimi</h1>
-          <p className="text-gray-400">Enerji üretim ve tüketim analizi</p>
+          <p className="text-gray-400">Enerji üretim ve tüketim analizi (Son 7 Gün)</p>
         </div>
 
-        {/* İstatistikler */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {energyStats.map((stat, idx) => (
-            <div key={idx} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <p className="text-gray-400 text-sm mb-2">{stat.label}</p>
-              <p className="text-3xl font-bold text-white mb-2">{stat.value}</p>
-              <p className="text-xs text-green-400">{stat.change}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Grafik */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2 bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-400" />
-              Enerji Üretim Trendi
-            </h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={energyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" stroke="#999" />
-                <YAxis stroke="#999" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
-                  labelStyle={{ color: '#fff' }}
-                />
-                <Legend />
-                <Line type="monotone" dataKey="production" stroke="#0ea5e9" name="Üretim (MWh)" />
-                <Line type="monotone" dataKey="solar" stroke="#f59e0b" name="Solar Radyasyon" />
-              </LineChart>
-            </ResponsiveContainer>
+        {/* Hata mesajı */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-900 border border-red-700 rounded-lg">
+            <p className="text-red-200">{error}</p>
           </div>
+        )}
 
-          {/* Kaynak Tablosu */}
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <h3 className="text-lg font-bold text-white mb-4">Enerji Kaynakları</h3>
-            <div className="space-y-4">
-              {energyBySource.map((source, idx) => (
-                <div key={idx}>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-300">{source.source}</span>
-                    <span className="text-white font-semibold">{source.value} MWh</span>
-                  </div>
-                  <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full ${
-                        idx === 0 ? 'bg-yellow-400' : idx === 1 ? 'bg-blue-400' : 'bg-green-400'
-                      }`}
-                      style={{ width: `${source.percentage}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">{source.percentage}%</p>
+        {/* Yükleme durumu */}
+        {loading && (
+          <div className="flex items-center justify-center h-96">
+            <p className="text-gray-400">Enerji verisi yükleniyor...</p>
+          </div>
+        )}
+
+        {!loading && (
+          <>
+            {/* İstatistikler */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {energyStats.map((stat, idx) => (
+                <div key={idx} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  <p className="text-gray-400 text-sm mb-2">{stat.label}</p>
+                  <p className="text-3xl font-bold text-white mb-2">{stat.value}</p>
+                  <p className="text-xs text-green-400">{stat.change}</p>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
 
-        {/* Detaylı Tablo */}
-        <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-          <div className="bg-gray-900 p-6 border-b border-gray-700">
-            <h3 className="text-lg font-bold text-white">Günlük Enerji Verisi</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-900 border-b border-gray-700">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Tarih</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Üretim (MWh)</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Solar Radyasyon</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Verimlilik</th>
-                </tr>
-              </thead>
-              <tbody>
-                {energyData.map((row, idx) => (
-                  <tr key={idx} className="border-b border-gray-700 hover:bg-gray-750">
-                    <td className="px-6 py-4 text-sm text-white">{row.date}</td>
-                    <td className="px-6 py-4 text-sm text-white font-semibold">{row.production}</td>
-                    <td className="px-6 py-4 text-sm text-gray-300">{row.solar}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-900 text-green-200">
-                        {((row.production / row.solar) * 100).toFixed(1)}%
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+            {/* Grafik */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              <div className="lg:col-span-2 bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-blue-400" />
+                  Enerji Üretim Trendi
+                </h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" stroke="#999" />
+                    <YAxis stroke="#999" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
+                      labelStyle={{ color: '#fff' }}
+                    />
+                    <Legend />
+                    <Line type="monotone" dataKey="production" stroke="#0ea5e9" name="Üretim (MWh)" strokeWidth={2} />
+                    <Line type="monotone" dataKey="solar" stroke="#f59e0b" name="Solar Radyasyon" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Kaynak Tablosu */}
+              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <h3 className="text-lg font-bold text-white mb-4">Enerji Kaynakları</h3>
+                <div className="space-y-4">
+                  {energyBySource.map((source, idx) => (
+                    <div key={idx}>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-gray-300">{source.source}</span>
+                        <span className="text-white font-semibold">{source.value} MWh</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full ${
+                            idx === 0 ? 'bg-yellow-400' : idx === 1 ? 'bg-blue-400' : 'bg-green-400'
+                          }`}
+                          style={{ width: `${source.percentage}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">{source.percentage}%</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Detaylı Tablo */}
+            <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+              <div className="bg-gray-900 p-6 border-b border-gray-700">
+                <h3 className="text-lg font-bold text-white">Günlük Enerji Verisi</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-900 border-b border-gray-700">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Tarih</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Üretim (MWh)</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Solar Radyasyon</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Verimlilik</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {chartData.map((row, idx) => (
+                      <tr key={idx} className="border-b border-gray-700 hover:bg-gray-750">
+                        <td className="px-6 py-4 text-sm text-white">{row.date}</td>
+                        <td className="px-6 py-4 text-sm text-white font-semibold">{row.production}</td>
+                        <td className="px-6 py-4 text-sm text-gray-300">{row.solar}</td>
+                        <td className="px-6 py-4 text-sm">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-900 text-green-200">
+                            {((row.production / row.solar) * 100).toFixed(1)}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </Layout>
   );

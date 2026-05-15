@@ -93,6 +93,7 @@ Dam.init(
     sequelize,
     tableName: 'dam_data',
     timestamps: false,
+    underscored: true,
     indexes: [
       {
         fields: ['name'],

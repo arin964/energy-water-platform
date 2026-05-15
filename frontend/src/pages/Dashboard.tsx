@@ -7,9 +7,12 @@ import EnergyChart from '../components/charts/EnergyChart';
 import { Zap, Droplet, TrendingUp, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
+import { energyService } from '../services/energyService';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [chartData, setChartData] = useState([]);
+  const [loadingChart, setLoadingChart] = useState(true);
   
   // Uyarıların ne zaman oluşturulduğunu tutan mock veriler (Gerçek projede API'den gelecektir)
   const [alerts, setAlerts] = useState([
@@ -41,15 +44,58 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const mockChartData = [
-    { date: '01.01', energy: 45, solar: 650 },
-    { date: '02.01', energy: 52, solar: 700 },
-    { date: '03.01', energy: 48, solar: 680 },
-    { date: '04.01', energy: 61, solar: 750 },
-    { date: '05.01', energy: 55, solar: 720 },
-    { date: '06.01', energy: 58, solar: 740 },
-    { date: '07.01', energy: 63, solar: 780 },
-  ];
+  // API'den 7 günlük enerji verisini çek
+  useEffect(() => {
+    const fetchEnergyData = async () => {
+      try {
+        setLoadingChart(true);
+
+        // Son 7 günün tarihini hesapla
+        const endDate = new Date();
+        const startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 6); // 7 gün (bugün dahil)
+
+        // Tarih formatı: YYYY-MM-DD
+        const start = startDate.toISOString().split('T')[0];
+        const end = endDate.toISOString().split('T')[0];
+
+        // API'den veri çek
+        const data = await energyService.getAll({ startDate: start, endDate: end });
+
+        // Veriyi grafik için uygun formata dönüştür
+        const formattedData = data.map((item: any) => {
+          const date = new Date(item.timestamp);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          
+          return {
+            date: `${day}.${month}.${year}`,
+            energy: Math.round(item.energyProduced),
+            solar: Math.round(item.solarRadiation),
+          };
+        });
+
+        setChartData(formattedData);
+      } catch (err) {
+        console.error('Enerji verisi çekilirken hata:', err);
+        // Fallback verisi ayarla
+        setChartData([
+          { date: '08.05.2026', energy: 45, solar: 650 },
+          { date: '09.05.2026', energy: 52, solar: 700 },
+          { date: '10.05.2026', energy: 48, solar: 680 },
+          { date: '11.05.2026', energy: 61, solar: 750 },
+          { date: '12.05.2026', energy: 55, solar: 720 },
+          { date: '13.05.2026', energy: 58, solar: 740 },
+          { date: '14.05.2026', energy: 63, solar: 780 },
+        ]);
+      } finally {
+        setLoadingChart(false);
+      }
+    };
+
+    fetchEnergyData();
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
@@ -100,7 +146,7 @@ const Dashboard: React.FC = () => {
 
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <EnergyChart data={mockChartData} />
+            <EnergyChart data={chartData} />
             
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">

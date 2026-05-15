@@ -87,6 +87,7 @@ Energy.init(
     sequelize,
     tableName: 'energy_data',
     timestamps: false,
+    underscored: true,
     indexes: [
       {
         fields: ['timestamp'],

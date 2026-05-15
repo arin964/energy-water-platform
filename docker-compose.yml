@@ -105,9 +105,6 @@ services:
       target: development
     container_name: energy_water_frontend
     restart: unless-stopped
-    environment:
-      - VITE_API_URL=http://localhost:5001/api
-      - VITE_ML_URL=http://localhost:8000
     ports:
       - "3001:3000"
     volumes:

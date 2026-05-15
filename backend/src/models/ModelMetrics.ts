@@ -106,9 +106,10 @@ ModelMetrics.init(
     sequelize,
     tableName: 'model_metrics',
     timestamps: false,
+    underscored: true,
     indexes: [
       {
-        fields: ['modelType', 'targetVariable'],
+        fields: ['model_type', 'target_variable'],
       },
       {
         fields: ['status'],

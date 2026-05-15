@@ -73,6 +73,7 @@ Water.init(
     sequelize,
     tableName: 'water_data',
     timestamps: false,
+    underscored: true,
     indexes: [
       {
         fields: ['timestamp'],

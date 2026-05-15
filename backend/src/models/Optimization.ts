@@ -122,12 +122,13 @@ Optimization.init(
     sequelize,
     tableName: 'optimization_scenarios',
     timestamps: false,
+    underscored: true,
     indexes: [
       {
-        fields: ['scenarioType'],
+        fields: ['scenario_type'],
       },
       {
-        fields: ['targetDate'],
+        fields: ['target_date'],
       },
       {
         fields: ['status'],
