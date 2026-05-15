@@ -1,0 +1,84 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "close": "Close"
+  },
+  "settings": {
+    "title": "System Settings",
+    "description": "Customize the application to your preferences",
+    "saved": "✓ Settings saved successfully and applied",
+    
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "themeDescription": "Choose the color scheme of the application",
+      "themeDark": "Dark Mode",
+      "themeLight": "Light Mode",
+      "language": "Language",
+      "languageDescription": "Select the interface language",
+      "languageTR": "Türkçe",
+      "languageEN": "English"
+    },
+    
+    "notifications": {
+      "title": "Notifications",
+      "email": "Email Notifications",
+      "emailDescription": "Send email notifications for important events",
+      "push": "Push Notifications",
+      "pushDescription": "Send instant push notifications",
+      "sound": "Sound Notifications",
+      "soundDescription": "Enable/disable notification sound"
+    },
+    
+    "security": {
+      "title": "Security",
+      "twoFactor": "Two-Factor Authentication",
+      "twoFactorDescription": "Protect your account with two-factor authentication",
+      "dataCollection": "Data Collection",
+      "dataCollectionDescription": "Allow data collection for analytics and improvements",
+      "autoBackup": "Automatic Backup",
+      "autoBackupDescription": "Automatically backup settings and data"
+    },
+    
+    "actions": {
+      "save": "Save Settings",
+      "reset": "Reset to Default Settings",
+      "resetConfirm": "All settings will be reset to default values. Are you sure?",
+      "resetSuccess": "Settings reset successfully"
+    }
+  },
+  
+  "navbar": {
+    "dashboard": "Dashboard",
+    "energy": "Energy",
+    "water": "Water",
+    "forecast": "Forecast",
+    "optimization": "Optimization",
+    "alerts": "Alerts",
+    "analytics": "Analytics",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  
+  "sidebar": {
+    "admin": "Administration",
+    "systemSettings": "System Settings",
+    "profile": "Profile",
+    "dataImport": "Data Import"
+  },
+  
+  "dashboard": {
+    "welcome": "Welcome",
+    "todayData": "Today's Data",
+    "thisMonth": "This Month"
+  }
+}

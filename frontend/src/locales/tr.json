@@ -1,0 +1,84 @@
+{
+  "common": {
+    "save": "Kaydet",
+    "cancel": "İptal Et",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "warning": "Uyarı",
+    "info": "Bilgi",
+    "close": "Kapat"
+  },
+  "settings": {
+    "title": "Sistem Ayarları",
+    "description": "Uygulamayı tercihlerinize göre özelleştirin",
+    "saved": "✓ Ayarlar başarıyla kaydedildi ve uygulandı",
+    
+    "appearance": {
+      "title": "Görünüm",
+      "theme": "Tema",
+      "themeDescription": "Uygulamanın renklendirilmesi",
+      "themeDark": "Koyu (Dark)",
+      "themeLight": "Açık (Light)",
+      "language": "Dil",
+      "languageDescription": "Arayüz dilini seçin",
+      "languageTR": "Türkçe",
+      "languageEN": "English"
+    },
+    
+    "notifications": {
+      "title": "Bildirimler",
+      "email": "Email Bildirimleri",
+      "emailDescription": "Önemli olaylar için email bildir",
+      "push": "Push Bildirimleri",
+      "pushDescription": "Anlık push bildirim gönder",
+      "sound": "Ses Bildirimleri",
+      "soundDescription": "Bildirim sesini aç/kapat"
+    },
+    
+    "security": {
+      "title": "Güvenlik",
+      "twoFactor": "İki Faktörlü Kimlik Doğrulama",
+      "twoFactorDescription": "Hesabını çift faktörlü doğrulama ile koru",
+      "dataCollection": "Veri Toplaması",
+      "dataCollectionDescription": "Analiz ve iyileştirme için veri toplamasına izin ver",
+      "autoBackup": "Otomatik Yedekleme",
+      "autoBackupDescription": "Ayarları ve verileri otomatik olarak yedekle"
+    },
+    
+    "actions": {
+      "save": "Ayarları Kaydet",
+      "reset": "Varsayılan Ayarlara Dön",
+      "resetConfirm": "Tüm ayarlar varsayılan değerlere sıfırlanacak. Emin misiniz?",
+      "resetSuccess": "Ayarlar başarıyla sıfırlandı"
+    }
+  },
+  
+  "navbar": {
+    "dashboard": "Gösterge Paneli",
+    "energy": "Enerji",
+    "water": "Su",
+    "forecast": "Tahmin",
+    "optimization": "Optimizasyon",
+    "alerts": "Uyarılar",
+    "analytics": "Analitikler",
+    "notifications": "Bildirimler",
+    "settings": "Ayarlar",
+    "logout": "Çıkış Yap"
+  },
+  
+  "sidebar": {
+    "admin": "Yönetim",
+    "systemSettings": "Sistem Ayarları",
+    "profile": "Profil",
+    "dataImport": "Veri İçe Aktar"
+  },
+  
+  "dashboard": {
+    "welcome": "Hoş Geldiniz",
+    "todayData": "Bugünün Verileri",
+    "thisMonth": "Bu Ay"
+  }
+}
