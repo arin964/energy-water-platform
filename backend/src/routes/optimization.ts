@@ -5,6 +5,18 @@ const router = Router();
 
 /**
  * @swagger
+ * /optimization/savings:
+ *   get:
+ *     summary: Aylık tasarruf hesapla
+ *     tags: [Optimization]
+ *     responses:
+ *       200:
+ *         description: Aylık tasarruf verileri
+ */
+router.get('/savings', optimizationController.getMonthlySavings.bind(optimizationController));
+
+/**
+ * @swagger
  * /optimization/recommendations:
  *   get:
  *     summary: Optimizasyon önerilerini al

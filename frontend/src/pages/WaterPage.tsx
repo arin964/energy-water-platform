@@ -44,9 +44,10 @@ const WaterPage: React.FC = () => {
           const date = new Date(item.timestamp);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
           
           return {
-            date: `${day}.${month}`,
+            date: `${day}.${month}.${year}`,
             consumption: Math.round(item.consumption),
             damLevel: 70, // Placeholder - could be calculated from dam data
           };
@@ -72,13 +73,13 @@ const WaterPage: React.FC = () => {
   }, []);
 
   const generateMockWaterData = (): WaterData[] => [
-    { date: '08.05', consumption: 2350, damLevel: 78 },
-    { date: '09.05', consumption: 2410, damLevel: 76 },
-    { date: '10.05', consumption: 2280, damLevel: 74 },
-    { date: '11.05', consumption: 2520, damLevel: 72 },
-    { date: '12.05', consumption: 2390, damLevel: 70 },
-    { date: '13.05', consumption: 2450, damLevel: 68 },
-    { date: '14.05', consumption: 2610, damLevel: 66 },
+    { date: '10.05.2026', consumption: 2350, damLevel: 78 },
+    { date: '11.05.2026', consumption: 2410, damLevel: 76 },
+    { date: '12.05.2026', consumption: 2280, damLevel: 74 },
+    { date: '13.05.2026', consumption: 2520, damLevel: 72 },
+    { date: '14.05.2026', consumption: 2390, damLevel: 70 },
+    { date: '15.05.2026', consumption: 2450, damLevel: 68 },
+    { date: '16.05.2026', consumption: 2610, damLevel: 66 },
   ];
 
   const generateMockDams = (): Dam[] => [

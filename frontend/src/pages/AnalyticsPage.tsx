@@ -1,15 +1,46 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/common/Layout';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, TrendingDown, AlertCircle, CheckCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import api from '../services/api';
+
+interface MonthlySavings {
+  month: string;
+  energySavings: number;
+  waterSavings: number;
+  totalEnergy: number;
+  totalWater: number;
+  costSavings: number;
+  dataPointsCount: number;
+}
 
 const AnalyticsPage: React.FC = () => {
+  const [monthlySavings, setMonthlySavings] = useState<MonthlySavings | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Aylık tasarrufu API'den çek
+  useEffect(() => {
+    const fetchMonthlySavings = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get<{ data: MonthlySavings }>('/optimization/savings');
+        setMonthlySavings(response.data.data);
+      } catch (error) {
+        console.error('Error fetching monthly savings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMonthlySavings();
+  }, []);
+
   const performanceData = [
     { ay: 'Ocak', hedef: 85, gerçek: 92, verimlilik: 88 },
     { ay: 'Şubat', hedef: 85, gerçek: 88, verimlilik: 85 },
     { ay: 'Mart', hedef: 90, gerçek: 94, verimlilik: 91 },
     { ay: 'Nisan', hedef: 90, gerçek: 87, verimlilik: 89 },
-    { ay: 'Mayıs', hedef: 95, gerçek: 96, verimlilik: 95 },
+    { ay: 'Mayıs', hedef: 95, gerçek: monthlySavings ? Math.round((monthlySavings.energySavings + monthlySavings.waterSavings) / 2) : 96, verimlilik: 95 },
     { ay: 'Haziran', hedef: 95, gerçek: 93, verimlilik: 92 },
   ];
 
@@ -23,10 +54,10 @@ const AnalyticsPage: React.FC = () => {
   const RENKLER = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
   const analitikler = [
-    { başlık: 'Ortalama Verimlililik', değer: '91.5%', trend: '+2.3%', up: true },
-    { başlık: 'Maliyet Tasarrufu', değer: '$12,450', trend: '+18.5%', up: true },
-    { başlık: 'CO₂ Azaltımı', değer: '245 Ton', trend: '+8.2%', up: true },
-    { başlık: 'Ortalama Yanıt Süresi', değer: '2.3 saat', trend: '-15%', up: false },
+    { başlık: 'Ortalama Verimlililik', değer: monthlySavings ? `${Math.round((monthlySavings.energySavings + monthlySavings.waterSavings) / 2)}%` : '91.5%', trend: '+2.3%', up: true },
+    { başlık: 'Maliyet Tasarrufu', değer: monthlySavings ? `₺${(monthlySavings.costSavings / 1000).toFixed(0)}K` : '$12,450', trend: '+18.5%', up: true },
+    { başlık: 'Enerji Tasarrufu', değer: monthlySavings ? `${monthlySavings.energySavings}%` : '+8.2%', trend: monthlySavings ? `+${monthlySavings.energySavings}%` : '+15%', up: true },
+    { başlık: 'Su Tasarrufu', değer: monthlySavings ? `${monthlySavings.waterSavings}%` : '-15%', trend: monthlySavings ? `+${monthlySavings.waterSavings}%` : '-15%', up: monthlySavings ? true : false },
   ];
 
   return (
@@ -42,15 +73,21 @@ const AnalyticsPage: React.FC = () => {
           {analitikler.map((item, idx) => (
             <div key={idx} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
               <p className="text-gray-400 text-sm mb-2">{item.başlık}</p>
-              <p className="text-3xl font-bold text-white mb-2">{item.değer}</p>
-              <div className="flex items-center gap-2">
-                {item.up ? (
-                  <TrendingUp className="w-4 h-4 text-green-400" />
-                ) : (
-                  <TrendingDown className="w-4 h-4 text-blue-400" />
-                )}
-                <span className={item.up ? 'text-green-400' : 'text-blue-400'} >{item.trend}</span>
-              </div>
+              {loading && idx > 0 ? (
+                <Loader className="w-6 h-6 animate-spin text-blue-300 my-2" />
+              ) : (
+                <>
+                  <p className="text-3xl font-bold text-white mb-2">{item.değer}</p>
+                  <div className="flex items-center gap-2">
+                    {item.up ? (
+                      <TrendingUp className="w-4 h-4 text-green-400" />
+                    ) : (
+                      <TrendingDown className="w-4 h-4 text-blue-400" />
+                    )}
+                    <span className={item.up ? 'text-green-400' : 'text-blue-400'} >{item.trend}</span>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>

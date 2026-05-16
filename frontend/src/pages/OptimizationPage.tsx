@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/common/Layout';
-import { Zap, TrendingUp, PieChart as PieChartIcon, CheckCircle } from 'lucide-react';
+import { Zap, TrendingUp, PieChart as PieChartIcon, CheckCircle, Loader } from 'lucide-react';
+import api from '../services/api';
+
+interface MonthlySavings {
+  month: string;
+  energySavings: number;
+  waterSavings: number;
+  totalEnergy: number;
+  totalWater: number;
+  costSavings: number;
+  dataPointsCount: number;
+}
 
 interface Scenario {
   id: number;
@@ -14,38 +25,9 @@ interface Scenario {
 }
 
 const OptimizationPage: React.FC = () => {
-  // --- GÖREV 13 & 14: DİNAMİK VERİ YÖNETİMİ ---
-  const [lastSolarValue, setLastSolarValue] = useState<number>(18);
-  const [lastWaterValue, setLastWaterValue] = useState<number>(12);
-  const [currentMonth, setCurrentMonth] = useState<string>('');
-  
-  useEffect(() => {
-    // GÖREV 14: LocalStorage'dan verileri arkadaşının kullandığı muhtemel anahtarlarla çekiyoruz
-    const energyData = JSON.parse(localStorage.getItem('importedEnergyData') || localStorage.getItem('manualEntries') || '[]');
-    const waterData = JSON.parse(localStorage.getItem('importedWaterData') || localStorage.getItem('manualEntries') || '[]');
+  const [monthlySavings, setMonthlySavings] = useState<MonthlySavings | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    if (energyData.length > 0) {
-      const lastEntry = energyData[0];
-      // Hem 'solar' hem 'Solar' ihtimalini kontrol ediyoruz
-      setLastSolarValue(Number(lastEntry.solar) || Number(lastEntry.Solar) || 18);
-    }
-
-    if (waterData.length > 0) {
-      const lastEntry = waterData[0];
-      // Arkadaşın 'consumption', 'tüketim' veya 'tuketim' yazmış olabilir, hepsini deniyoruz
-      setLastWaterValue(
-        Number(lastEntry.consumption) || 
-        Number(lastEntry.tüketim) || 
-        Number(lastEntry.tuketim) || 
-        Number(lastEntry.tüketim_mwh) || 12
-      );
-    }
-
-    // GÖREV 13: Ay bilgisini otomatik al
-    const monthName = new Date().toLocaleString('tr-TR', { month: 'long' });
-    setCurrentMonth(monthName);
-  }, []);
- 
   const [scenarios] = useState<Scenario[]>([
     {
       id: 1,
@@ -88,18 +70,17 @@ const OptimizationPage: React.FC = () => {
     },
   ]);
 
-  // GÖREV 14: Tüm sistem önerileri girilen verilere göre dinamikleşti
-  const recommendations = [
+  const [recommendations] = useState([
     {
       title: 'Solar Panel Kapasitesi Artırılsın',
-      impact: `Enerji Tasarrufu: +${lastSolarValue}%`,
-      priority: lastSolarValue > 25 ? 'high' : 'medium',
+      impact: 'Enerji Tasarrufu: +18%',
+      priority: 'high',
       roi: '3.2 Yıl',
     },
     {
       title: 'Baraj Seviyesine Göre Suya Başlayın',
-      impact: `Su Tasarrufu: +${lastWaterValue}%`, 
-      priority: lastWaterValue > 30 ? 'high' : 'medium',
+      impact: 'Su Tasarrufu: +12%',
+      priority: 'medium',
       roi: '2.1 Yıl',
     },
     {
@@ -114,13 +95,34 @@ const OptimizationPage: React.FC = () => {
       priority: 'high',
       roi: '2.5 Yıl',
     },
-  ];
+  ]);
 
-  const [currentSavings] = useState({
-    totalEnergy: 42,
-    totalWater: 18,
-    monthlyReduction: 89000,
-  });
+  // Aylık tasarrufu API'den çek
+  useEffect(() => {
+    const fetchMonthlySavings = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get<{ data: MonthlySavings }>('/optimization/savings');
+        setMonthlySavings(response.data.data);
+      } catch (error) {
+        console.error('Error fetching monthly savings:', error);
+        // Fallback veriler
+        setMonthlySavings({
+          month: 'Mayıs 2026',
+          energySavings: 15,
+          waterSavings: 12,
+          totalEnergy: 1850,
+          totalWater: 123000,
+          costSavings: 28500,
+          dataPointsCount: 0,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMonthlySavings();
+  }, []);
 
   return (
     <Layout>
@@ -130,15 +132,21 @@ const OptimizationPage: React.FC = () => {
           <p className="text-gray-400">Enerji ve su kaynaklarını optimize et</p>
         </div>
 
-        {/* Mevcut Tasarruflar Bölümü - GÖREV 13 kapsamında ay isimleri dinamikleştirildi */}
+        {/* Mevcut Tasarruflar */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-900 to-blue-800 rounded-lg p-6 border border-blue-700">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-blue-200">Enerji Tasarrufu</h3>
               <Zap className="w-6 h-6 text-blue-300" />
             </div>
-            <p className="text-4xl font-bold text-white mb-2">{currentSavings.totalEnergy}%</p>
-            <p className="text-sm text-blue-200">{currentMonth} Ayı Tasarrufu</p>
+            {loading ? (
+              <Loader className="w-6 h-6 animate-spin text-blue-300" />
+            ) : (
+              <>
+                <p className="text-4xl font-bold text-white mb-2">{monthlySavings?.energySavings}%</p>
+                <p className="text-sm text-blue-200">{monthlySavings?.month}</p>
+              </>
+            )}
           </div>
 
           <div className="bg-gradient-to-br from-green-900 to-green-800 rounded-lg p-6 border border-green-700">
@@ -146,8 +154,14 @@ const OptimizationPage: React.FC = () => {
               <h3 className="text-lg font-semibold text-green-200">Su Tasarrufu</h3>
               <PieChartIcon className="w-6 h-6 text-green-300" />
             </div>
-            <p className="text-4xl font-bold text-white mb-2">{currentSavings.totalWater}%</p>
-            <p className="text-sm text-green-200">{currentMonth} Ayı Tasarrufu</p>
+            {loading ? (
+              <Loader className="w-6 h-6 animate-spin text-green-300" />
+            ) : (
+              <>
+                <p className="text-4xl font-bold text-white mb-2">{monthlySavings?.waterSavings}%</p>
+                <p className="text-sm text-green-200">{monthlySavings?.month}</p>
+              </>
+            )}
           </div>
 
           <div className="bg-gradient-to-br from-yellow-900 to-yellow-800 rounded-lg p-6 border border-yellow-700">
@@ -155,8 +169,14 @@ const OptimizationPage: React.FC = () => {
               <h3 className="text-lg font-semibold text-yellow-200">Aylık Tasarruf</h3>
               <TrendingUp className="w-6 h-6 text-yellow-300" />
             </div>
-            <p className="text-4xl font-bold text-white mb-2">₺{(currentSavings.monthlyReduction / 1000).toFixed(0)}K</p>
-            <p className="text-sm text-yellow-200">{currentMonth} Analizi</p>
+            {loading ? (
+              <Loader className="w-6 h-6 animate-spin text-yellow-300" />
+            ) : (
+              <>
+                <p className="text-4xl font-bold text-white mb-2">₺{(monthlySavings?.costSavings || 0).toLocaleString()}</p>
+                <p className="text-sm text-yellow-200">Maliyet tasarrufu</p>
+              </>
+            )}
           </div>
         </div>
 
@@ -165,12 +185,22 @@ const OptimizationPage: React.FC = () => {
           <h2 className="text-2xl font-bold text-white mb-4">Optimizasyon Senaryoları</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {scenarios.map((scenario) => (
-              <div key={scenario.id} className={`rounded-lg border p-6 transition-all ${scenario.status === 'active' ? 'bg-gray-800 border-green-600' : 'bg-gray-800 border-gray-700'}`}>
+              <div 
+                key={scenario.id} 
+                className={`rounded-lg border p-6 transition-all ${
+                  scenario.status === 'active'
+                    ? 'bg-gray-800 border-green-600'
+                    : 'bg-gray-800 border-gray-700'
+                }`}
+              >
                 <div className="flex items-start justify-between mb-4">
                   <h3 className="text-lg font-bold text-white">{scenario.name}</h3>
-                  {scenario.status === 'active' && <CheckCircle className="w-6 h-6 text-green-500" />}
+                  {scenario.status === 'active' && (
+                    <CheckCircle className="w-6 h-6 text-green-500" />
+                  )}
                 </div>
                 <p className="text-gray-400 text-sm mb-4">{scenario.description}</p>
+
                 <div className="space-y-3 mb-4">
                   {scenario.savings.map((saving, idx) => (
                     <div key={idx} className="flex justify-between text-sm">
@@ -183,7 +213,14 @@ const OptimizationPage: React.FC = () => {
                     <span className="text-green-400 font-semibold">₺{(scenario.costReduction / 1000).toFixed(0)}K</span>
                   </div>
                 </div>
-                <button className={`w-full py-2 rounded-lg text-sm font-semibold transition-all ${scenario.status === 'active' ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-200'}`}>
+
+                <button 
+                  className={`w-full py-2 rounded-lg text-sm font-semibold transition-all ${
+                    scenario.status === 'active'
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                  }`}
+                >
                   {scenario.status === 'active' ? 'Aktif' : 'Etkinleştir'}
                 </button>
               </div>
@@ -191,7 +228,7 @@ const OptimizationPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Sistem Önerileri Bölümü */}
+        {/* Öneriler */}
         <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
           <h2 className="text-2xl font-bold text-white mb-6">Sistem Önerileri</h2>
           <div className="space-y-4">
@@ -202,7 +239,11 @@ const OptimizationPage: React.FC = () => {
                     <h3 className="text-lg font-semibold text-white mb-2">{rec.title}</h3>
                     <div className="flex items-center gap-4">
                       <span className="text-sm text-green-400">{rec.impact}</span>
-                      <span className={`px-3 py-1 rounded text-xs font-semibold ${rec.priority === 'high' ? 'bg-red-900 text-red-200' : 'bg-yellow-900 text-yellow-200'}`}>
+                      <span className={`px-3 py-1 rounded text-xs font-semibold ${
+                        rec.priority === 'high'
+                          ? 'bg-red-900 text-red-200'
+                          : 'bg-yellow-900 text-yellow-200'
+                      }`}>
                         {rec.priority.toUpperCase()}
                       </span>
                     </div>
