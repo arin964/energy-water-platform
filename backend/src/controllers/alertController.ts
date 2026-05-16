@@ -23,7 +23,7 @@ export class AlertController {
       
       const alerts = await Alert.findAll({
         where,
-        order: [['createdAt', 'DESC']],
+        order: [['severity', 'DESC'], ['id', 'DESC']],
         limit: 100,
       });
       
@@ -42,7 +42,7 @@ export class AlertController {
     try {
       const alerts = await Alert.findAll({
         where: { isActive: true },
-        order: [['severity', 'DESC'], ['createdAt', 'DESC']],
+        order: [['severity', 'DESC'], ['id', 'DESC']],
       });
       
       res.json({

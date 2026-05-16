@@ -141,26 +141,71 @@ CREATE INDEX idx_optimization_status ON optimization_scenarios(status);
 CREATE INDEX idx_model_type_target ON model_metrics(model_type, target_variable);
 CREATE INDEX idx_model_status ON model_metrics(status);
 
--- Insert sample data
+-- Insert 30 days of realistic energy data with seasonal variation
 INSERT INTO energy_data (timestamp, solar_radiation, temperature, humidity, wind_speed, energy_produced, location, latitude, longitude)
-VALUES 
-    (NOW() - INTERVAL '7 days', 750, 28, 55, 4.5, 52, 'Ankara', 39.9334, 32.8597),
-    (NOW() - INTERVAL '6 days', 720, 27, 58, 3.8, 48, 'Ankara', 39.9334, 32.8597),
-    (NOW() - INTERVAL '5 days', 780, 29, 52, 4.2, 55, 'Ankara', 39.9334, 32.8597),
-    (NOW() - INTERVAL '4 days', 800, 30, 50, 5.0, 58, 'Ankara', 39.9334, 32.8597),
-    (NOW() - INTERVAL '3 days', 760, 28, 54, 4.3, 53, 'Ankara', 39.9334, 32.8597),
-    (NOW() - INTERVAL '2 days', 790, 29, 51, 4.7, 56, 'Ankara', 39.9334, 32.8597),
-    (NOW() - INTERVAL '1 day', 820, 31, 48, 5.2, 60, 'Ankara', 39.9334, 32.8597);
+SELECT 
+    NOW() - INTERVAL '1 day' * (generate_series(0, 29)),
+    750 + RANDOM() * 200 - 100 + 50 * SIN(generate_series(0, 29) * 0.2),
+    25 + RANDOM() * 10 + 5 * SIN(generate_series(0, 29) * 0.1),
+    50 + RANDOM() * 30,
+    3 + RANDOM() * 4,
+    50 + RANDOM() * 15 + 10 * SIN(generate_series(0, 29) * 0.15),
+    'Ankara',
+    39.9334,
+    32.8597;
 
+-- Insert 30 days of realistic water data
 INSERT INTO water_data (timestamp, consumption, sector, region, population, rainfall, temperature)
-VALUES 
-    (NOW() - INTERVAL '7 days', 45000, 'domestic', 'Ankara', 5500000, 2.5, 28),
-    (NOW() - INTERVAL '6 days', 46500, 'industrial', 'Ankara', 5500000, 1.8, 27),
-    (NOW() - INTERVAL '5 days', 44200, 'agricultural', 'Ankara', 5500000, 3.2, 29),
-    (NOW() - INTERVAL '4 days', 48000, 'domestic', 'Ankara', 5500000, 0.5, 30),
-    (NOW() - INTERVAL '3 days', 47300, 'industrial', 'Ankara', 5500000, 1.2, 28),
-    (NOW() - INTERVAL '2 days', 45800, 'agricultural', 'Ankara', 5500000, 2.8, 29),
-    (NOW() - INTERVAL '1 day', 49200, 'domestic', 'Ankara', 5500000, 0.8, 31);
+SELECT 
+    NOW() - INTERVAL '1 day' * i,
+    44000 + RANDOM() * 8000 + 3000 * SIN(i * 0.1),
+    CASE WHEN (i % 3) = 0 THEN 'domestic' 
+         WHEN (i % 3) = 1 THEN 'industrial' 
+         ELSE 'agricultural' END,
+    'Ankara',
+    5500000,
+    RANDOM() * 5,
+    25 + RANDOM() * 10 + 5 * SIN(i * 0.1)
+FROM generate_series(0, 29) AS t(i);
+
+-- Insert dam data with realistic levels
+INSERT INTO dam_data (timestamp, name, location, capacity, current_level, fill_percentage, inflow, outflow, latitude, longitude)
+SELECT 
+    NOW() - INTERVAL '1 day' * i,
+    CASE i % 3
+        WHEN 0 THEN 'Keban Barajı'
+        WHEN 1 THEN 'Euphrates Dam'
+        ELSE 'Melen Dam'
+    END,
+    CASE i % 3
+        WHEN 0 THEN 'Elazığ'
+        WHEN 1 THEN 'Gaziantep'
+        ELSE 'Istanbul'
+    END,
+    CASE i % 3
+        WHEN 0 THEN 32000
+        WHEN 1 THEN 28000
+        ELSE 15000
+    END,
+    CASE i % 3
+        WHEN 0 THEN 32000 * (0.65 + RANDOM() * 0.20)
+        WHEN 1 THEN 28000 * (0.60 + RANDOM() * 0.25)
+        ELSE 15000 * (0.70 + RANDOM() * 0.15)
+    END,
+    (RANDOM() * 20 + 60)::INT,
+    1000 + RANDOM() * 500,
+    500 + RANDOM() * 300,
+    CASE i % 3
+        WHEN 0 THEN 38.75
+        WHEN 1 THEN 37.15
+        ELSE 41.20
+    END,
+    CASE i % 3
+        WHEN 0 THEN 39.50
+        WHEN 1 THEN 37.95
+        ELSE 28.90
+    END
+FROM generate_series(0, 29) AS t(i);
 
 INSERT INTO alerts (type, category, title, message, severity)
 VALUES 

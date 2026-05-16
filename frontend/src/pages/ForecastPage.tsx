@@ -23,7 +23,6 @@ const ForecastPage: React.FC = () => {
   const [modelAccuracy] = useState([
     { name: 'LSTM Modeli', accuracy: 92.4, mae: 28.5 },
     { name: 'Prophet Modeli', accuracy: 88.7, mae: 42.3 },
-    { name: 'XGBoost Modeli', accuracy: 91.2, mae: 35.6 },
   ]);
 
   const [nextDayForecast] = useState({
