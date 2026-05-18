@@ -27,6 +27,31 @@ interface Scenario {
 const OptimizationPage: React.FC = () => {
   const [monthlySavings, setMonthlySavings] = useState<MonthlySavings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeScenarios, setActiveScenarios] = useState<number[]>([1, 2]); // Peak Load ve Yenilenebilir başlangıçta aktif
+  const [scenarioLoading, setScenarioLoading] = useState(false);
+
+  // Senaryo etkinleştir
+  const handleActivateScenario = async (scenarioId: number) => {
+    try {
+      setScenarioLoading(true);
+      const response = await api.post('/optimization/activate-scenario', { scenarioId });
+      
+      // Senaryoyu aktif listesine ekle
+      setActiveScenarios(prev => [...new Set([...prev, scenarioId])]);
+      
+      // Tasarrufları yeniden hesapla
+      const savingsResponse = await api.get('/optimization/savings');
+      setMonthlySavings(savingsResponse.data.data);
+      
+      // Başarı mesajı
+      alert(`✓ ${response.data.data.message}`);
+    } catch (error) {
+      console.error('Senaryo etkinleştirme hatası:', error);
+      alert('Senaryo etkinleştirilemedi');
+    } finally {
+      setScenarioLoading(false);
+    }
+  };
 
   const [scenarios] = useState<Scenario[]>([
     {
@@ -184,47 +209,52 @@ const OptimizationPage: React.FC = () => {
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-white mb-4">Optimizasyon Senaryoları</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {scenarios.map((scenario) => (
-              <div 
-                key={scenario.id} 
-                className={`rounded-lg border p-6 transition-all ${
-                  scenario.status === 'active'
-                    ? 'bg-gray-800 border-green-600'
-                    : 'bg-gray-800 border-gray-700'
-                }`}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-lg font-bold text-white">{scenario.name}</h3>
-                  {scenario.status === 'active' && (
-                    <CheckCircle className="w-6 h-6 text-green-500" />
-                  )}
-                </div>
-                <p className="text-gray-400 text-sm mb-4">{scenario.description}</p>
-
-                <div className="space-y-3 mb-4">
-                  {scenario.savings.map((saving, idx) => (
-                    <div key={idx} className="flex justify-between text-sm">
-                      <span className="text-gray-300">{saving.category} Tasarrufu</span>
-                      <span className="text-white font-semibold">+{saving.percentage}%</span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between text-sm border-t border-gray-700 pt-3">
-                    <span className="text-gray-300">Aylık Maliyet Azalışı</span>
-                    <span className="text-green-400 font-semibold">₺{(scenario.costReduction / 1000).toFixed(0)}K</span>
-                  </div>
-                </div>
-
-                <button 
-                  className={`w-full py-2 rounded-lg text-sm font-semibold transition-all ${
-                    scenario.status === 'active'
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+            {scenarios.map((scenario) => {
+              const isActive = activeScenarios.includes(scenario.id);
+              return (
+                <div 
+                  key={scenario.id} 
+                  className={`rounded-lg border p-6 transition-all ${
+                    isActive
+                      ? 'bg-gray-800 border-green-600'
+                      : 'bg-gray-800 border-gray-700'
                   }`}
                 >
-                  {scenario.status === 'active' ? 'Aktif' : 'Etkinleştir'}
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="text-lg font-bold text-white">{scenario.name}</h3>
+                    {isActive && (
+                      <CheckCircle className="w-6 h-6 text-green-500" />
+                    )}
+                  </div>
+                  <p className="text-gray-400 text-sm mb-4">{scenario.description}</p>
+
+                  <div className="space-y-3 mb-4">
+                    {scenario.savings.map((saving, idx) => (
+                      <div key={idx} className="flex justify-between text-sm">
+                        <span className="text-gray-300">{saving.category} Tasarrufu</span>
+                        <span className="text-white font-semibold">+{saving.percentage}%</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between text-sm border-t border-gray-700 pt-3">
+                      <span className="text-gray-300">Aylık Maliyet Azalışı</span>
+                      <span className="text-green-400 font-semibold">₺{(scenario.costReduction / 1000).toFixed(0)}K</span>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={() => !isActive && handleActivateScenario(scenario.id)}
+                    disabled={isActive || scenarioLoading}
+                    className={`w-full py-2 rounded-lg text-sm font-semibold transition-all ${
+                      isActive
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-200 disabled:opacity-50'
+                    }`}
+                  >
+                    {scenarioLoading && !isActive ? '⏳ Etkinleştiriliyor...' : isActive ? 'Aktif' : 'Etkinleştir'}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
 

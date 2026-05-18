@@ -9,6 +9,7 @@ interface EnergyAttributes {
   humidity?: number;
   windSpeed?: number;
   energyProduced?: number;
+  source?: 'Solar' | 'Wind' | 'Hydro' | 'Other';
   location: string;
   latitude: number;
   longitude: number;
@@ -26,6 +27,7 @@ class Energy extends Model<EnergyAttributes, EnergyCreationAttributes> implement
   public humidity?: number;
   public windSpeed?: number;
   public energyProduced?: number;
+  public source?: 'Solar' | 'Wind' | 'Hydro' | 'Other';
   public location!: string;
   public latitude!: number;
   public longitude!: number;
@@ -70,6 +72,11 @@ Energy.init(
       allowNull: true,
       comment: 'MWh',
     },
+    source: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: 'Enerji kaynağı',
+    },
     location: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -94,6 +101,9 @@ Energy.init(
       },
       {
         fields: ['location'],
+      },
+      {
+        fields: ['source'],
       },
     ],
   }

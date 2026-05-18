@@ -133,6 +133,73 @@ export class OptimizationController {
       next(error);
     }
   }
+
+  // Activate optimization scenario
+  async activateScenario(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { scenarioId } = req.body;
+
+      // Senaryo ID'sine göre işlem yap
+      const scenarios: any = {
+        1: { // Peak Load Yönetimi
+          name: 'Peak Load Yönetimi',
+          energySavings: 15,
+          waterSavings: 8,
+          costReduction: 22000,
+        },
+        2: { // Yenilenebilir Entegrasyonu
+          name: 'Yenilenebilir Entegrasyonu',
+          energySavings: 28,
+          waterSavings: 12,
+          costReduction: 45000,
+        },
+        3: { // Su Tasarruf Programı
+          name: 'Su Tasarruf Programı',
+          energySavings: 8,
+          waterSavings: 35,
+          costReduction: 38000,
+        },
+      };
+
+      if (!scenarios[scenarioId]) {
+        return res.status(400).json({
+          success: false,
+          message: 'Geçersiz senaryo ID',
+        });
+      }
+
+      const scenario = scenarios[scenarioId];
+
+      // ML Service'e çağrı yap
+      try {
+        const mlResponse = await axios.post(`${config.mlService.url}/optimize`, {
+          scenario_id: scenarioId,
+          scenario_name: scenario.name,
+        });
+
+        res.json({
+          success: true,
+          data: {
+            message: `${scenario.name} senaryo etkinleştirildi`,
+            scenario: scenario,
+            mlData: mlResponse.data,
+          },
+        });
+      } catch (mlError) {
+        // ML Service'e bağlanamazsa, yine de senaryo verilerini döndür
+        res.json({
+          success: true,
+          data: {
+            message: `${scenario.name} senaryo etkinleştirildi`,
+            scenario: scenario,
+            warning: 'ML Service ile veri senkronizasyonu başarılamadı',
+          },
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new OptimizationController();

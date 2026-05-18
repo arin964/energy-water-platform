@@ -31,6 +31,7 @@ const DataImportPage: React.FC = () => {
   };
 
   const [manualData, setManualData] = useState<EnergyDataInput>(emptyForm);
+  const [customLocation, setCustomLocation] = useState(false);
 
   // Sayfa yüklendiğinde localStorage'dan mevcut verileri çek
   useEffect(() => {
@@ -68,7 +69,7 @@ const DataImportPage: React.FC = () => {
     setManualData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleManualSubmit = () => {
+  const handleManualSubmit = async () => {
     // Basit kontrol: Boş alan bırakılmasın
     if (!manualData.tarih || !manualData.konum || manualData.uretim === '') {
       setUploadStatus('error');
@@ -76,19 +77,90 @@ const DataImportPage: React.FC = () => {
       return;
     }
 
-    const newData = { ...manualData, id: Date.now() };
-    const updatedList = [newData, ...importedData];
-    
-    // Senkronizasyon: localStorage'a kaydet (Diğer sayfalar buradan okuyacak)
-    localStorage.setItem('importedEnergyData', JSON.stringify(updatedList));
-    setImportedData(updatedList);
+    try {
+      // Veriler 3 kaydda veritabanına kaydedilecek (SOLAR / WIND / HYDRO)
+      const baseData = {
+        timestamp: `${manualData.tarih}T${manualData.saat || '12:00'}:00Z`,
+        location: manualData.konum,
+        latitude: 39.5, // Varsayılan
+        longitude: 35,  // Varsayılan
+      };
 
-    setUploadStatus('success');
-    setUploadMessage('✅ Veriler başarıyla kaydedildi ve sisteme aktarıldı!');
-    
-    // Formu sıfırla (İstediğin gibi tertemiz yapar)
-    setManualData(emptyForm);
-    setTimeout(() => setUploadStatus('idle'), 3000);
+      // 3 kayıt oluştur: SOLAR, WIND, HYDRO
+      const energyRecords = [
+        {
+          ...baseData,
+          source: 'Solar',
+          energyProduced: parseFloat(manualData.solar as string) || 0,
+          solarRadiation: parseFloat(manualData.solar as string) || 0,
+          temperature: 20,
+          humidity: 50,
+        },
+        {
+          ...baseData,
+          source: 'Wind',
+          energyProduced: parseFloat(manualData.ruzgar as string) || 0,
+          windSpeed: 5,
+          temperature: 20,
+          humidity: 50,
+        },
+        {
+          ...baseData,
+          source: 'Hydro',
+          energyProduced: parseFloat(manualData.uretim as string) - (parseFloat(manualData.solar as string) || 0) - (parseFloat(manualData.ruzgar as string) || 0) || 0,
+          temperature: 20,
+          humidity: 50,
+        },
+      ];
+
+      console.log('📤 Gönderilen veriler:', energyRecords);
+
+      // API'ye POST et (her kayıt ayrı)
+      let successCount = 0;
+      for (const record of energyRecords) {
+        try {
+          const response = await fetch('http://localhost:5000/api/energy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(record),
+          });
+
+          console.log(`📊 ${record.source} yanıt:`, response.status, response.statusText);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`${record.source} hatası:`, errorText);
+          } else {
+            successCount++;
+          }
+        } catch (fetchError) {
+          console.error(`${record.source} gönderme hatası:`, fetchError);
+        }
+      }
+
+      if (successCount > 0) {
+        // localStorage'a da kaydet (eski sistem uyumu)
+        const newData = { ...manualData, id: Date.now() };
+        const updatedList = [newData, ...importedData];
+        localStorage.setItem('importedEnergyData', JSON.stringify(updatedList));
+        setImportedData(updatedList);
+
+        setUploadStatus('success');
+        setUploadMessage(`✅ ${successCount}/3 veri başarıyla veritabanına kaydedildi. Enerji sayfasını yenileyerek görebilirsiniz.`);
+        
+        // Formu sıfırla
+        setManualData(emptyForm);
+        setTimeout(() => setUploadStatus('idle'), 5000);
+      } else {
+        throw new Error('Hiçbir veri kaydedilemedi. Lütfen backend sunucusunun çalışıp çalışmadığını kontrol edin.');
+      }
+    } catch (error) {
+      setUploadStatus('error');
+      const errorMsg = error instanceof Error ? error.message : 'Bilinmeyen hata';
+      setUploadMessage(`❌ Hata: ${errorMsg}`);
+      console.error('❌ Tam hata:', error);
+      setTimeout(() => setUploadStatus('idle'), 5000);
+    }
   };
 
   const clearHistory = () => {
@@ -173,12 +245,28 @@ const DataImportPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tesis / Konum</label>
-                  <select value={manualData.konum} onChange={(e) => handleManualInputChange('konum', e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 outline-none">
-                    <option value="">Seçiniz...</option>
-                    <option>İstanbul Santral</option>
-                    <option>Ankara Tesisi</option>
-                    <option>İzmir Santral</option>
-                  </select>
+                  <div className="flex gap-2">
+                    {!customLocation ? (
+                      <select value={manualData.konum} onChange={(e) => handleManualInputChange('konum', e.target.value)} className="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 outline-none">
+                        <option value="">Seçiniz...</option>
+                        <option>İstanbul Santral</option>
+                        <option>Ankara Tesisi</option>
+                        <option>İzmir Santral</option>
+                        <option>Bursa Elektrik</option>
+                        <option>Gaziantep Enerji</option>
+                        <option>Konya Tesisi</option>
+                        <option>Adana Santral</option>
+                        <option>Mersin Enerji</option>
+                        <option>Antalya Tesisi</option>
+                        <option>Kayseri Santral</option>
+                      </select>
+                    ) : (
+                      <input type="text" placeholder="Tesis adını yazın..." value={manualData.konum} onChange={(e) => handleManualInputChange('konum', e.target.value)} className="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 outline-none" />
+                    )}
+                    <button onClick={() => setCustomLocation(!customLocation)} className="px-4 py-3 bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/30 text-blue-300 rounded-xl transition-all font-semibold text-sm">
+                      {customLocation ? 'Liste' : 'Özel'}
+                    </button>
+                  </div>
                 </div>
                 {['uretim', 'tuketim', 'solar', 'ruzgar'].map((field) => (
                     <div key={field}>

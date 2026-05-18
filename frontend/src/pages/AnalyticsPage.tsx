@@ -35,14 +35,19 @@ const AnalyticsPage: React.FC = () => {
     fetchMonthlySavings();
   }, []);
 
+  // Bugünün tarihine kadar performans verilerini göster
   const performanceData = [
     { ay: 'Ocak', hedef: 85, gerçek: 92, verimlilik: 88 },
     { ay: 'Şubat', hedef: 85, gerçek: 88, verimlilik: 85 },
     { ay: 'Mart', hedef: 90, gerçek: 94, verimlilik: 91 },
     { ay: 'Nisan', hedef: 90, gerçek: 87, verimlilik: 89 },
     { ay: 'Mayıs', hedef: 95, gerçek: monthlySavings ? Math.round((monthlySavings.energySavings + monthlySavings.waterSavings) / 2) : 96, verimlilik: 95 },
-    { ay: 'Haziran', hedef: 95, gerçek: 93, verimlilik: 92 },
-  ];
+  ].filter((_, idx) => {
+    const today = new Date();
+    const currentMonth = today.getMonth(); // 0-11 (Ocak=0, Mayıs=4)
+    // Şu ana kadar olan ayları göster (bugünün ayı dahil)
+    return idx <= currentMonth;
+  });
 
   const costAnalysis = [
     { kategori: 'Enerji Maliyeti', değer: 45, yüzde: 45 },
@@ -152,18 +157,33 @@ const AnalyticsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {performanceData.slice(0, 3).map((row, idx) => (
+                {performanceData.map((row, idx) => (
                   <tr key={idx} className="border-b border-gray-700 hover:bg-gray-750 transition-colors">
                     <td className="px-6 py-4 text-sm text-white font-medium">{row.ay}</td>
                     <td className="px-6 py-4 text-sm text-gray-300">{row.hedef}%</td>
                     <td className="px-6 py-4 text-sm text-green-400 font-semibold">{row.gerçek}%</td>
                     <td className="px-6 py-4 text-sm">
-                      <span className="text-green-400">+{row.gerçek - row.hedef}%</span>
+                      <span className={row.gerçek >= row.hedef ? "text-green-400" : "text-red-400"}>
+                        {row.gerçek >= row.hedef ? "+" : ""}{row.gerçek - row.hedef}%
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-sm">
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-green-900 text-green-200">
-                        <CheckCircle className="w-4 h-4" />
-                        Başarılı
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+                        row.gerçek >= row.hedef 
+                          ? 'bg-green-900 text-green-200' 
+                          : 'bg-yellow-900 text-yellow-200'
+                      }`}>
+                        {row.gerçek >= row.hedef ? (
+                          <>
+                            <CheckCircle className="w-4 h-4" />
+                            Başarılı
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="w-4 h-4" />
+                            Orta
+                          </>
+                        )}
                       </span>
                     </td>
                   </tr>

@@ -57,4 +57,25 @@ router.get('/water-treatment', optimizationController.getBestTimeForWaterTreatme
  */
 router.post('/scenario', optimizationController.runScenario.bind(optimizationController));
 
+/**
+ * @swagger
+ * /optimization/activate-scenario:
+ *   post:
+ *     summary: Senaryo etkinleştir (Su Tasarrufu, Peak Load, vb)
+ *     tags: [Optimization]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               scenarioId:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Senaryo başarıyla etkinleştirildi
+ */
+router.post('/activate-scenario', optimizationController.activateScenario.bind(optimizationController));
+
 export default router;

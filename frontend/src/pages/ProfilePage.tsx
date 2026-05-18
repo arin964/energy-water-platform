@@ -3,8 +3,8 @@ import { User, Mail, Lock, Phone, MapPin, Camera, Save } from 'lucide-react';
 import Layout from '../components/common/Layout';
 
 const defaultProfile = {
-  firstName: 'Admin',
-  lastName: 'User',
+  firstName: 'Arin',
+  lastName: 'Fidan',
   email: 'admin@energywater.com',
   phone: '+90 (212) 555-1234',
   location: 'Istanbul, Turkey',
@@ -22,12 +22,29 @@ export const ProfilePage: React.FC = () => {
 
   const [saved, setSaved] = useState(false);
 
-  // Sayfa ilk yüklendiğinde localStorage'ı varsayılan verilerle güncelle
+  // Sayfa ilk yüklendiğinde localStorage'ı kontrol et ve güncellemeleri uygula
   useEffect(() => {
     const savedData = localStorage.getItem('profileData');
+    
     if (!savedData) {
-      setProfile(defaultProfile);
+      // localStorage'da veri yoksa default'u kaydet
       localStorage.setItem('profileData', JSON.stringify(defaultProfile));
+    } else {
+      // Eski formatta veri varsa (Admin User) güncelle
+      try {
+        const parsedData = JSON.parse(savedData);
+        if (parsedData.firstName === 'Admin' && parsedData.lastName === 'User') {
+          // Eski veriyi yeni default'a güncelle
+          const updatedProfile = { ...defaultProfile, email: parsedData.email || defaultProfile.email };
+          localStorage.setItem('profileData', JSON.stringify(updatedProfile));
+          setProfile(updatedProfile);
+          // Navbar'ı güncelle
+          window.dispatchEvent(new Event('profileUpdated'));
+        }
+      } catch (e) {
+        // JSON parse hatası, default'u kaydet
+        localStorage.setItem('profileData', JSON.stringify(defaultProfile));
+      }
     }
   }, []);
 
@@ -40,6 +57,8 @@ export const ProfilePage: React.FC = () => {
   const handleSave = () => {
     // localStorage'a kaydet
     localStorage.setItem('profileData', JSON.stringify(profile));
+    // Navbar'ı güncelle için event gönder
+    window.dispatchEvent(new Event('profileUpdated'));
     setSaved(true);
     setTimeout(() => setSaved(false), 5000);
   };
@@ -49,6 +68,8 @@ export const ProfilePage: React.FC = () => {
     if (profile.newPassword === profile.confirmPassword && profile.newPassword.length > 0) {
       // localStorage'a kaydet
       localStorage.setItem('profileData', JSON.stringify(profile));
+      // Navbar'ı güncelle için event gönder
+      window.dispatchEvent(new Event('profileUpdated'));
       setSaved(true);
       setProfile((prev) => ({
         ...prev,

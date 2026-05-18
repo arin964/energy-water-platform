@@ -16,6 +16,8 @@ const WaterPage: React.FC = () => {
   const [dams, setDams] = useState<Dam[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [conservationProgram, setConservationProgram] = useState<any>(null);
+  const [programLoading, setProgramLoading] = useState(false);
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,54 +25,122 @@ const WaterPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load water and dam data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Fetch water data (last 7 days)
-        const endDate = new Date();
-        const startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - 6);
+      // Fetch water data (last 7 days)
+      const endDate = new Date();
+      const startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 6);
 
-        const start = startDate.toISOString().split('T')[0];
-        const end = endDate.toISOString().split('T')[0];
+      const start = startDate.toISOString().split('T')[0];
+      const end = endDate.toISOString().split('T')[0];
 
-        const water = await waterService.getAll({ startDate: start, endDate: end });
+      const water = await waterService.getAll({ startDate: start, endDate: end });
+      
+      // Format water data
+      const formattedWater: WaterData[] = water.map((item: any) => {
+        const date = new Date(item.timestamp);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
         
-        // Format water data
-        const formattedWater: WaterData[] = water.map((item: any) => {
-          const date = new Date(item.timestamp);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          
-          return {
-            date: `${day}.${month}.${year}`,
-            consumption: Math.round(item.consumption),
-            damLevel: 70, // Placeholder - could be calculated from dam data
-          };
-        });
+        return {
+          date: `${day}.${month}.${year}`,
+          consumption: Math.round(item.consumption),
+          damLevel: 70, // Placeholder - could be calculated from dam data
+        };
+      });
 
-        setWaterData(formattedWater.length > 0 ? formattedWater : generateMockWaterData());
+      setWaterData(formattedWater.length > 0 ? formattedWater : generateMockWaterData());
 
-        // Fetch dams data
-        const damsData = await damService.getAll();
-        setDams(damsData);
-      } catch (err) {
-        console.error('Veri yükleme hatası:', err);
-        setError('Veriler yüklenemedi');
-        // Use mock data as fallback
-        setWaterData(generateMockWaterData());
-        setDams(generateMockDams());
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Fetch dams data
+      const damsData = await damService.getAll();
+      setDams(damsData);
+    } catch (err) {
+      console.error('Veri yükleme hatası:', err);
+      setError('Veriler yüklenemedi');
+      // Use mock data as fallback
+      setWaterData(generateMockWaterData());
+      setDams(generateMockDams());
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
+    // Program durumunu localStorage'dan yükle
+    const savedProgram = localStorage.getItem('conservationProgram');
+    if (savedProgram) {
+      setConservationProgram(JSON.parse(savedProgram));
+      // Backend'den de güncel durumunu kontrol et
+      fetchConservationStats();
+    }
   }, []);
+
+  // Su Tasarruf Programı Başlat
+  const handleStartConservationProgram = async () => {
+    try {
+      setProgramLoading(true);
+      const response = await fetch('http://localhost:5000/api/water/conservation-program', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          targetReduction: 20, // 20% tasarruf hedefi
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setConservationProgram(result.program);
+        // localStorage'a kaydet
+        localStorage.setItem('conservationProgram', JSON.stringify(result.program));
+        alert('✓ Su Tasarruf Programı başlatıldı!\n' + result.program.message);
+        
+        // Programın istatistikleri getir
+        fetchConservationStats();
+      } else {
+        alert('❌ Program başlatılamadı: ' + result.message);
+      }
+    } catch (err) {
+      console.error('Program başlatma hatası:', err);
+      alert('❌ Programı başlatırken hata oluştu');
+    } finally {
+      setProgramLoading(false);
+    }
+  };
+
+  // Su Tasarruf Programı İstatistikleri Getir
+  const fetchConservationStats = async () => {
+    try {
+      const endDate = new Date();
+      const startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 30);
+
+      const start = startDate.toISOString().split('T')[0];
+      const end = endDate.toISOString().split('T')[0];
+
+      const response = await fetch(
+        `http://localhost:5000/api/water/conservation-program?startDate=${start}&endDate=${end}`
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        setConservationProgram(result.program);
+        // localStorage'a kaydet
+        localStorage.setItem('conservationProgram', JSON.stringify(result.program));
+      }
+    } catch (err) {
+      console.error('Istatistikler getirme hatası:', err);
+    }
+  };
 
   const generateMockWaterData = (): WaterData[] => [
     { date: '10.05.2026', consumption: 2350, damLevel: 78 },
@@ -147,10 +217,13 @@ const WaterPage: React.FC = () => {
     if (window.confirm('Bu barajı silmek istediğinizden emin misiniz?')) {
       try {
         await damService.delete(id);
-        setDams(dams.filter(dam => dam.id !== id));
+        alert('✓ Baraj başarıyla silindi');
+        
+        // VERİLERİ YENİDEN ÇEK - REFETCH
+        await fetchData();
       } catch (err) {
         console.error('Silme hatası:', err);
-        alert('Baraj silinirken hata oluştu');
+        alert('❌ Baraj silinirken hata oluştu');
       }
     }
   };
@@ -174,6 +247,16 @@ const WaterPage: React.FC = () => {
       alert('Baraj kaydedilirken hata oluştu');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Su Tasarruf Programı Durdur
+  const handleStopConservationProgram = async () => {
+    if (window.confirm('Su Tasarruf Programını durmak istediğinizden emin misiniz?')) {
+      setConservationProgram(null);
+      // localStorage'dan kaldır
+      localStorage.removeItem('conservationProgram');
+      alert('✓ Su Tasarruf Programı durduruldu');
     }
   };
 
@@ -203,6 +286,55 @@ const WaterPage: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* Su Tasarruf Programı - Aktif olduğunda yeşil kart, değilse başlat butonu */}
+        {conservationProgram ? (
+        <div className="mb-8 bg-gradient-to-r from-green-900 to-green-800 rounded-lg p-6 border border-green-700">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">🌱 Su Tasarruf Programı</h2>
+              <p className="text-green-200">Tabanı 20% azaltarak su tasarrufu sağlayın</p>
+            </div>
+            <button
+              onClick={handleStopConservationProgram}
+              className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition"
+            >
+              Programı Durdur
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div className="bg-green-700 bg-opacity-50 rounded p-4">
+              <p className="text-green-200 text-sm">Ortalama Tüketim</p>
+              <p className="text-2xl font-bold text-white">
+                {conservationProgram.avgConsumption || conservationProgram.baselineConsumption} m³
+              </p>
+            </div>
+            <div className="bg-green-700 bg-opacity-50 rounded p-4">
+              <p className="text-green-200 text-sm">Hedef Tüketim</p>
+              <p className="text-2xl font-bold text-white">
+                {conservationProgram.targetConsumption} m³
+              </p>
+            </div>
+            <div className="bg-green-700 bg-opacity-50 rounded p-4">
+              <p className="text-green-200 text-sm">Tasarruf Oranı</p>
+              <p className="text-2xl font-bold text-green-300">
+                %{conservationProgram.savingsPercentage || conservationProgram.targetReductionPercentage}
+              </p>
+            </div>
+          </div>
+        </div>
+        ) : (
+        <div className="mb-4">
+          <button
+            onClick={handleStartConservationProgram}
+            disabled={programLoading}
+            className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg font-semibold transition text-lg"
+          >
+            {programLoading ? 'Başlatılıyor...' : '🌱 Su Tasarruf Programını Başlat'}
+          </button>
+        </div>
+        )}
 
         {/* Grafikler */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

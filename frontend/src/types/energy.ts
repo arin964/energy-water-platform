@@ -6,6 +6,7 @@ export interface EnergyData {
   humidity: number;
   windSpeed: number;
   energyProduced: number;
+  source?: 'Solar' | 'Wind' | 'Hydro' | 'Other';
   location: string;
   latitude: number;
   longitude: number;

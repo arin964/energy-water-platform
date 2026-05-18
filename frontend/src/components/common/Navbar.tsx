@@ -13,11 +13,38 @@ const Navbar: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
   const [allNotifications, setAllNotifications] = useState<any[]>([]);
+  const [userName, setUserName] = useState('User');
 
   const notificationRef = useRef<HTMLDivElement>(null);
   const adminRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Profil bilgisini localStorage'dan yükle
+    const loadUserName = () => {
+      const savedProfile = localStorage.getItem('profileData');
+      if (savedProfile) {
+        try {
+          const profile = JSON.parse(savedProfile);
+          setUserName(`${profile.firstName} ${profile.lastName}`);
+        } catch (e) {
+          // JSON parse hatası, default olarak User göster
+          setUserName('User');
+        }
+      } else {
+        // localStorage'da veri yoksa User göster
+        setUserName('User');
+      }
+    };
+
+    loadUserName();
+
+    // Profil değişikliğini dinle
+    const handleProfileUpdate = () => {
+      loadUserName();
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
     // 1. NOKTA KONTROLÜ: Sayfa her yüklendiğinde hafızaya bak
     const isGloballyRead = localStorage.getItem('notificationsReadStatus') === 'true';
     if (isGloballyRead) {
@@ -47,7 +74,11 @@ const Navbar: React.FC = () => {
     };
 
     window.addEventListener('notificationsRead', handleReadSignal);
-    return () => window.removeEventListener('notificationsRead', handleReadSignal);
+    
+    return () => {
+      window.removeEventListener('notificationsRead', handleReadSignal);
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, []);
 
   const handleNotificationNavigation = () => {
@@ -97,12 +128,22 @@ const Navbar: React.FC = () => {
         <div className="relative" ref={adminRef}>
           <button onClick={() => setShowAdminMenu(!showAdminMenu)} className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-lg">
             <User size={20} className="text-gray-300" />
-            <span className="text-sm font-medium text-white">Merve Polat</span>
+            <span className="text-sm font-medium text-white">{userName}</span>
           </button>
           {showAdminMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
                <button onClick={() => navigate('/profile')} className="w-full p-3 text-left text-sm text-gray-200 hover:bg-gray-700">Profilim</button>
-               <button onClick={() => { localStorage.clear(); navigate('/login'); }} className="w-full p-3 text-left text-sm text-red-400 hover:bg-red-900/20">Çıkış Yap</button>
+               <button onClick={() => { 
+                 // Profil bilgilerini sakla
+                 const profileData = localStorage.getItem('profileData');
+                 // localStorage'ı temizle
+                 localStorage.clear();
+                 // Profil bilgilerini geri yükle
+                 if (profileData) {
+                   localStorage.setItem('profileData', profileData);
+                 }
+                 navigate('/login'); 
+               }} className="w-full p-3 text-left text-sm text-red-400 hover:bg-red-900/20">Çıkış Yap</button>
             </div>
           )}
         </div>

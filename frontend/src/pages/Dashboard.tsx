@@ -13,25 +13,8 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [chartData, setChartData] = useState([]);
   const [loadingChart, setLoadingChart] = useState(true);
-  
-  // Uyarıların ne zaman oluşturulduğunu tutan mock veriler (Gerçek projede API'den gelecektir)
-  const [alerts, setAlerts] = useState([
-    { 
-      type: 'warning', 
-      message: 'Baraj seviyesi %20 altına düşebilir', 
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 saat önce
-    },
-    { 
-      type: 'info', 
-      message: 'Yeni tahmin modeli güncellendi', 
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000) // 5 saat önce
-    },
-    { 
-      type: 'critical', 
-      message: 'Enerji üretimi beklenenin altında', 
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 gün önce
-    },
-  ]);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [loadingAlerts, setLoadingAlerts] = useState(true);
 
   // Zamanın her dakika otomatik güncellenmesi için state tetikleyici
   const [now, setNow] = useState(new Date());
@@ -42,6 +25,41 @@ const Dashboard: React.FC = () => {
     }, 60000); // Her 60 saniyede bir arayüzü tazeler
 
     return () => clearInterval(timer);
+  }, []);
+
+  // API'den aktif uyarıları çek
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        setLoadingAlerts(true);
+        const response = await fetch('http://localhost:5000/api/alerts/active');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          setAlerts(result.data);
+        } else {
+          // Fallback: mock data
+          setAlerts([
+            { 
+              type: 'warning', 
+              message: 'Baraj seviyesi %20 altına düşebilir', 
+              timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+              severity: 6
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error('Uyarılar çekilirken hata:', error);
+      } finally {
+        setLoadingAlerts(false);
+      }
+    };
+
+    fetchAlerts();
+    
+    // Her 5 dakikada bir alertleri yeniden çek
+    const alertInterval = setInterval(fetchAlerts, 5 * 60 * 1000);
+    return () => clearInterval(alertInterval);
   }, []);
 
   // API'den 7 günlük enerji verisini çek
@@ -154,20 +172,33 @@ const Dashboard: React.FC = () => {
               </h3>
               
               <div className="space-y-3">
-                {alerts.map((alert, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div className={`w-2 h-2 rounded-full mt-2 ${
-                      alert.type === 'critical' ? 'bg-red-500' :
-                      alert.type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-                    }`} />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-800 dark:text-white">{alert.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatDistanceToNow(alert.timestamp, { addSuffix: true, locale: tr })}
-                      </p>
+                {alerts.map((alert, index) => {
+                  // Timestamp'i valid bir tarih nesnesine dönüştür
+                  const alertDate = alert.timestamp 
+                    ? new Date(alert.timestamp) 
+                    : new Date();
+                  
+                  // Geçersiz tarihler için kontrol
+                  const isValidDate = !isNaN(alertDate.getTime());
+                  
+                  return (
+                    <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className={`w-2 h-2 rounded-full mt-2 ${
+                        alert.type === 'critical' ? 'bg-red-500' :
+                        alert.type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+                      }`} />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-800 dark:text-white">{alert.message}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {isValidDate 
+                            ? formatDistanceToNow(alertDate, { addSuffix: true, locale: tr })
+                            : 'Zaman bilgisi yok'
+                          }
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

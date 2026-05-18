@@ -1,19 +1,90 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Layout from '../components/common/Layout';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, Trash2 } from 'lucide-react';
 import { energyService } from '../services/energyService';
 
 interface ChartData {
+  id: number;
   date: string;
   production: number;
   solar: number;
+  source: string;
+  timestamp: string;
+}
+
+interface EnergySource {
+  source: string;
+  value: number;
+  percentage: number;
 }
 
 const EnergyPage: React.FC = () => {
   const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [energyBySource, setEnergyBySource] = useState<EnergySource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingSources, setLoadingSources] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Enerji verisini sil
+  const handleDeleteEnergy = async (id: number) => {
+    if (!window.confirm('Bu veriyi silmek istediğinizden emin misiniz?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`http://localhost:5000/api/energy/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Silme işlemi başarısız oldu');
+      }
+      
+      alert('✓ Veri başarıyla silindi');
+      
+      // VERİLERİ YENİDEN ÇEK - REFETCH
+      const endDate = new Date();
+      const startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 6);
+      const start = startDate.toISOString();
+      const end = new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString();
+      
+      const freshData = await energyService.getAll({ startDate: start, endDate: end });
+      
+      // TÜM KAYITLARI GÖSTER - GRUPLAMAMA
+      const formattedData: ChartData[] = freshData
+        .filter((item: any) => item.energyProduced !== null && item.energyProduced !== undefined)
+        .map((item: any) => {
+          const date = new Date(item.timestamp);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          
+          const sourceNames: Record<string, string> = {
+            'Solar': '☀️ Solar',
+            'Wind': '💨 Rüzgar',
+            'Hydro': '💧 Hidrolik',
+            'Other': 'Diğer',
+          };
+          
+          return {
+            id: item.id,
+            timestamp: item.timestamp,
+            date: `${day}.${month}.${year}`,
+            production: Math.round(item.energyProduced),
+            solar: Math.round(item.solarRadiation || 0),
+            source: sourceNames[item.source] || item.source || 'Bilinmeyen',
+          };
+        })
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      setChartData(formattedData);
+    } catch (error) {
+      console.error('Silme hatası:', error);
+      alert('❌ Veri silinirken hata oluştu');
+    }
+  };
 
   // API'den 7 günlük veri çek
   useEffect(() => {
@@ -22,47 +93,46 @@ const EnergyPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // Son 7 günün tarihini hesapla
         const endDate = new Date();
         const startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - 6); // 7 gün (bugün dahil)
+        startDate.setDate(startDate.getDate() - 6);
 
-        // Tarih formatı: YYYY-MM-DD
-        const start = startDate.toISOString().split('T')[0];
-        const end = endDate.toISOString().split('T')[0];
+        const start = startDate.toISOString();
+        const end = new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString();
 
-        // API'den veri çek
         const data = await energyService.getAll({ startDate: start, endDate: end });
 
-        // Veriyi grafik için uygun formata dönüştür
-        const formattedData: ChartData[] = data.map((item: any) => {
-          const date = new Date(item.timestamp);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          
-          return {
-            date: `${day}.${month}.${year}`,
-            production: Math.round(item.energyProduced),
-            solar: Math.round(item.solarRadiation),
-          };
-        });
+        // TÜM KAYITLARI GÖSTER - GRUPLAMAMA
+        const formattedData: ChartData[] = data
+          .filter((item: any) => item.energyProduced !== null && item.energyProduced !== undefined)
+          .map((item: any) => {
+            const date = new Date(item.timestamp);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            
+            const sourceNames: Record<string, string> = {
+              'Solar': '☀️ Solar',
+              'Wind': '💨 Rüzgar',
+              'Hydro': '💧 Hidrolik',
+              'Other': 'Diğer',
+            };
+            
+            return {
+              id: item.id,
+              timestamp: item.timestamp,
+              date: `${day}.${month}.${year}`,
+              production: Math.round(item.energyProduced),
+              solar: Math.round(item.solarRadiation || 0),
+              source: sourceNames[item.source] || item.source || 'Bilinmeyen',
+            };
+          })
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
         setChartData(formattedData);
       } catch (err) {
-        console.error('Enerji verisi çekilirken hata:', err);
-        setError('Enerji verisi yüklenemedi. Lütfen daha sonra tekrar deneyin.');
-        // Fallback verisi ayarla (test için)
-        setChartData([
-          { date: '08.05.2026', production: 450, solar: 680 },
-          { date: '09.05.2026', production: 520, solar: 750 },
-          { date: '10.05.2026', production: 480, solar: 670 },
-          { date: '11.05.2026', production: 610, solar: 800 },
-          { date: '12.05.2026', production: 550, solar: 720 },
-          { date: '13.05.2026', production: 580, solar: 760 },
-          { date: '14.05.2026', production: 630, solar: 810 },
-          { date: '15.05.2026', production: 600, solar: 790 },
-        ]);
+        console.error('Hata:', err);
+        setError('Veri yüklenemedi');
       } finally {
         setLoading(false);
       }
@@ -71,7 +141,46 @@ const EnergyPage: React.FC = () => {
     fetchEnergyData();
   }, []);
 
-  // İstatistikleri chartData'dan hesapla
+  // Kaynağa göre veri çek
+  useEffect(() => {
+    const fetchEnergyBySource = async () => {
+      try {
+        setLoadingSources(true);
+        
+        const response = await fetch('http://localhost:5000/api/energy/sources?days=30');
+        const result = await response.json();
+        
+        if (result.success && result.sources) {
+          const sourceNames: Record<string, string> = {
+            'Solar': 'Solar',
+            'Wind': 'Rüzgar',
+            'Hydro': 'Hidrolik',
+            'Other': 'Diğer',
+          };
+          
+          const translatedSources = result.sources.map((src: any) => ({
+            source: sourceNames[src.source] || src.source,
+            value: src.value,
+            percentage: src.percentage,
+          }));
+          
+          setEnergyBySource(translatedSources);
+        }
+      } catch (err) {
+        console.error('Hata:', err);
+        setEnergyBySource([
+          { source: 'Solar', value: 2480, percentage: 65 },
+          { source: 'Rüzgar', value: 900, percentage: 23 },
+          { source: 'Hidrolik', value: 440, percentage: 12 },
+        ]);
+      } finally {
+        setLoadingSources(false);
+      }
+    };
+
+    fetchEnergyBySource();
+  }, []);
+
   const getStats = () => {
     if (chartData.length === 0) {
       return [
@@ -86,8 +195,7 @@ const EnergyPage: React.FC = () => {
     const avgProduction = Math.round(totalProduction / chartData.length);
     const maxProduction = Math.max(...chartData.map(item => item.production));
     const maxDate = chartData.find(item => item.production === maxProduction)?.date || '-';
-    const avgSolar = Math.round(chartData.reduce((sum, item) => sum + item.solar, 0) / chartData.length);
-    const solarPercentage = Math.round((totalProduction / (totalProduction + 900 + 440)) * 100); // Basit hesap
+    const solarPercentage = Math.round((totalProduction / (totalProduction + 900 + 440)) * 100);
 
     return [
       { label: 'Toplam Üretim (7 Gün)', value: `${totalProduction} MWh`, change: `+${totalProduction}` },
@@ -99,12 +207,6 @@ const EnergyPage: React.FC = () => {
 
   const energyStats = getStats();
 
-  const [energyBySource] = useState([
-    { source: 'Solar', value: 2480, percentage: 65 },
-    { source: 'Rüzgar', value: 900, percentage: 23 },
-    { source: 'Hidrolik', value: 440, percentage: 12 },
-  ]);
-
   return (
     <Layout>
       <div className="p-8 max-w-7xl">
@@ -113,14 +215,12 @@ const EnergyPage: React.FC = () => {
           <p className="text-gray-400">Enerji üretim ve tüketim analizi (Son 7 Gün)</p>
         </div>
 
-        {/* Hata mesajı */}
         {error && (
           <div className="mb-6 p-4 bg-red-900 border border-red-700 rounded-lg">
             <p className="text-red-200">{error}</p>
           </div>
         )}
 
-        {/* Yükleme durumu */}
         {loading && (
           <div className="flex items-center justify-center h-96">
             <p className="text-gray-400">Enerji verisi yükleniyor...</p>
@@ -129,7 +229,6 @@ const EnergyPage: React.FC = () => {
 
         {!loading && (
           <>
-            {/* İstatistikler */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {energyStats.map((stat, idx) => (
                 <div key={idx} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
@@ -140,15 +239,24 @@ const EnergyPage: React.FC = () => {
               ))}
             </div>
 
-            {/* Grafik */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               <div className="lg:col-span-2 bg-gray-800 rounded-lg p-6 border border-gray-700">
                 <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-blue-400" />
-                  Enerji Üretim Trendi
+                  Enerji Üretim Trendi (Günlük Toplam)
                 </h2>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={chartData}>
+                  <LineChart data={Array.from(
+                    chartData.reduce((acc: Map<string, any>, item: any) => {
+                      if (!acc.has(item.date)) {
+                        acc.set(item.date, { date: item.date, production: 0, solar: 0 });
+                      }
+                      const existing = acc.get(item.date)!;
+                      existing.production += item.production;
+                      existing.solar += item.solar;
+                      return acc;
+                    }, new Map()).values()
+                  ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" stroke="#999" />
                     <YAxis stroke="#999" />
@@ -163,7 +271,6 @@ const EnergyPage: React.FC = () => {
                 </ResponsiveContainer>
               </div>
 
-              {/* Kaynak Tablosu */}
               <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                 <h3 className="text-lg font-bold text-white mb-4">Enerji Kaynakları</h3>
                 <div className="space-y-4">
@@ -188,7 +295,6 @@ const EnergyPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Detaylı Tablo */}
             <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
               <div className="bg-gray-900 p-6 border-b border-gray-700">
                 <h3 className="text-lg font-bold text-white">Günlük Enerji Verisi</h3>
@@ -198,21 +304,34 @@ const EnergyPage: React.FC = () => {
                   <thead className="bg-gray-900 border-b border-gray-700">
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Tarih</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Kaynak</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Üretim (MWh)</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Solar Radyasyon</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Verimlilik</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">İşlem</th>
                     </tr>
                   </thead>
                   <tbody>
                     {chartData.map((row, idx) => (
                       <tr key={idx} className="border-b border-gray-700 hover:bg-gray-750">
                         <td className="px-6 py-4 text-sm text-white">{row.date}</td>
+                        <td className="px-6 py-4 text-sm font-semibold text-white">{row.source}</td>
                         <td className="px-6 py-4 text-sm text-white font-semibold">{row.production}</td>
                         <td className="px-6 py-4 text-sm text-gray-300">{row.solar}</td>
                         <td className="px-6 py-4 text-sm">
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-900 text-green-200">
-                            {((row.production / row.solar) * 100).toFixed(1)}%
+                            {row.solar > 0 ? ((row.production / row.solar) * 100).toFixed(1) : '—'}%
                           </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <button
+                            onClick={() => handleDeleteEnergy(row.id)}
+                            className="inline-flex items-center gap-2 px-3 py-2 bg-red-900 hover:bg-red-800 text-red-200 rounded text-xs font-medium transition"
+                            title="Sil"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Sil
+                          </button>
                         </td>
                       </tr>
                     ))}

@@ -22,6 +22,25 @@ const LoginPage: React.FC = () => {
           role: 'admin',
           loginTime: new Date().toISOString(),
         }));
+        
+        // Profil bilgilerinin var olup olmadığını kontrol et
+        const profileData = localStorage.getItem('profileData');
+        if (!profileData) {
+          // Profil bilgisi yoksa varsayılanları yükle
+          const defaultProfile = {
+            firstName: 'Arin',
+            lastName: 'Fidan',
+            email: 'admin@energywater.com',
+            phone: '+90 (212) 555-1234',
+            location: 'Istanbul, Turkey',
+            bio: 'Sistem yöneticisi',
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: '',
+          };
+          localStorage.setItem('profileData', JSON.stringify(defaultProfile));
+        }
+        
         // Ana sayfaya yönlendir
         window.location.href = '/';
       } else {
