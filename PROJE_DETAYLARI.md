@@ -18,7 +18,7 @@ Günümüzde enerji ve su yönetimi, iklim değişikliği, nüfus artışı ve k
 
 ### Çözüm Yaklaşımı
 Bu platform, NASA POWER, DSİ, MGM ve TÜİK gibi kurumlardan sağlanacak çok kaynaklı verilerle:
-- 🤖 **LSTM, Prophet ve XGBoost** modelleriyle tahminleme
+- 🤖 **LSTM ve Prophet** modelleriyle tahminleme
 - ⚡ **Doğrusal programlama** ve **genetik algoritmalar** ile optimizasyon
 - 📊 **Web tabanlı dashboard** ile görselleştirme
 - 🔔 **Erken uyarı mekanizması** ile kriz yönetimi
@@ -31,7 +31,7 @@ Bu platform, NASA POWER, DSİ, MGM ve TÜİK gibi kurumlardan sağlanacak çok k
 
 1. **Tahmin Doğruluğu**
    - ✅ Güneş enerjisi üretimini **en az %85 doğrulukla** tahmin etmek
-   - ✅ LSTM, Prophet ve XGBoost modellerini karşılaştırmalı olarak kullanmak
+   - ✅ LSTM ve Prophet modellerini karşılaştırmalı olarak kullanmak
    - ✅ Model performansını RMSE, MAE, MAPE ve R² metrikleriyle ölçmek
 
 2. **Su Tüketimi Tahmini**
@@ -93,7 +93,6 @@ Bu platform, NASA POWER, DSİ, MGM ve TÜİK gibi kurumlardan sağlanacak çok k
 - **Framework**: FastAPI
 - **Deep Learning**: TensorFlow/Keras
 - **Time Series**: Prophet
-- **Gradient Boosting**: XGBoost
 - **Data Processing**: NumPy, Pandas
 - **Optimization**: SciPy
 - **Database**: SQLAlchemy + psycopg2
@@ -189,7 +188,7 @@ Bu platform, NASA POWER, DSİ, MGM ve TÜİK gibi kurumlardan sağlanacak çok k
 - target_date: TIMESTAMP
 - predicted_value: FLOAT
 - confidence: FLOAT
-- model_used: VARCHAR(100) ('LSTM', 'Prophet', 'XGBoost')
+- model_used: VARCHAR(100) ('LSTM', 'Prophet')
 - parameters: JSONB
 - created_at, updated_at: TIMESTAMP
 ```
@@ -231,7 +230,7 @@ Bu platform, NASA POWER, DSİ, MGM ve TÜİK gibi kurumlardan sağlanacak çok k
 #### 7. model_metrics
 ```sql
 - id: SERIAL PRIMARY KEY
-- model_type: ENUM ('LSTM', 'Prophet', 'XGBoost')
+- model_type: ENUM ('LSTM', 'Prophet')
 - target_variable: ENUM ('energy', 'water', 'dam')
 - rmse: FLOAT
 - mae: FLOAT
@@ -294,20 +293,6 @@ Bu platform, NASA POWER, DSİ, MGM ve TÜİK gibi kurumlardan sağlanacak çok k
 - **Yearly Seasonality**: True
 - **Weekly Seasonality**: True
 - **Daily Seasonality**: False
-
-### 3. XGBoost
-
-#### Kullanım Alanları
-- Hızlı tahminler
-- Feature importance analizi
-- Ensemble model
-
-#### Özellikler
-- **N Estimators**: 100
-- **Max Depth**: 6
-- **Learning Rate**: 0.1
-- **Objective**: reg:squarederror
-- **Min Child Weight**: 1
 
 ---
 

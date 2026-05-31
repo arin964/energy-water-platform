@@ -62,23 +62,14 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(alertInterval);
   }, []);
 
-  // API'den 7 günlük enerji verisini çek
+  // API'den tüm enerji verisini çek
   useEffect(() => {
     const fetchEnergyData = async () => {
       try {
         setLoadingChart(true);
 
-        // Son 7 günün tarihini hesapla
-        const endDate = new Date();
-        const startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - 6); // 7 gün (bugün dahil)
-
-        // Tarih formatı: YYYY-MM-DD
-        const start = startDate.toISOString().split('T')[0];
-        const end = endDate.toISOString().split('T')[0];
-
-        // API'den veri çek
-        const data = await energyService.getAll({ startDate: start, endDate: end });
+        // Tüm verileri getir - tarih filtresi yok
+        const data = await energyService.getAll();
 
         // Veriyi grafik için uygun formata dönüştür
         const formattedData = data.map((item: any) => {

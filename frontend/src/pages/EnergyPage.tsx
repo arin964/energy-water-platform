@@ -44,13 +44,7 @@ const EnergyPage: React.FC = () => {
       alert('✓ Veri başarıyla silindi');
       
       // VERİLERİ YENİDEN ÇEK - REFETCH
-      const endDate = new Date();
-      const startDate = new Date(endDate);
-      startDate.setDate(startDate.getDate() - 6);
-      const start = startDate.toISOString();
-      const end = new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString();
-      
-      const freshData = await energyService.getAll({ startDate: start, endDate: end });
+      const freshData = await energyService.getAll();
       
       // TÜM KAYITLARI GÖSTER - GRUPLAMAMA
       const formattedData: ChartData[] = freshData
@@ -86,21 +80,15 @@ const EnergyPage: React.FC = () => {
     }
   };
 
-  // API'den 7 günlük veri çek
+  // API'den tüm veri çek
   useEffect(() => {
     const fetchEnergyData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const endDate = new Date();
-        const startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - 6);
-
-        const start = startDate.toISOString();
-        const end = new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString();
-
-        const data = await energyService.getAll({ startDate: start, endDate: end });
+        // Tüm verileri getir
+        const data = await energyService.getAll();
 
         // TÜM KAYITLARI GÖSTER - GRUPLAMAMA
         const formattedData: ChartData[] = data

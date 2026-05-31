@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/common/Layout';
-import { Upload, Plus, FileText, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
+import { Plus, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
 
 interface EnergyDataInput {
   tarih: string;
@@ -13,8 +13,6 @@ interface EnergyDataInput {
 }
 
 const DataImportPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'csv' | 'manual'>('csv');
-  const [csvFile, setCsvFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [uploadMessage, setUploadMessage] = useState('');
   const [importedData, setImportedData] = useState<any[]>([]);
@@ -38,31 +36,6 @@ const DataImportPage: React.FC = () => {
     const savedData = JSON.parse(localStorage.getItem('importedEnergyData') || '[]');
     setImportedData(savedData);
   }, []);
-
-  // CSV/Excel Dosya Seçimi ve Filtreleme
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const allowedExtensions = /(\.csv|\.xlsx|\.xls)$/i;
-      if (!allowedExtensions.exec(file.name)) {
-        setUploadStatus('error');
-        setUploadMessage('Sadece .csv, .xlsx ve .xls formatları kabul edilir.');
-        setCsvFile(null);
-        e.target.value = ''; // Inputu temizle
-        return;
-      }
-      setCsvFile(file);
-      setUploadStatus('idle');
-    }
-  };
-
-  const handleCSVSubmit = () => {
-    if (!csvFile) return;
-    setUploadStatus('success');
-    setUploadMessage(`✅ ${csvFile.name} başarıyla yüklendi!`);
-    setCsvFile(null);
-    setTimeout(() => setUploadStatus('idle'), 5000);
-  };
 
   // Manuel Veri Girişi Değişiklik Yönetimi
   const handleManualInputChange = (field: keyof EnergyDataInput, value: any) => {
@@ -186,55 +159,10 @@ const DataImportPage: React.FC = () => {
           </div>
         )}
 
-        {/* Tab Menü */}
-        <div className="flex gap-4 mb-8">
-          <button onClick={() => setActiveTab('csv')} className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all ${activeTab === 'csv' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
-            <FileText size={20} /> CSV / Excel
-          </button>
-          <button onClick={() => setActiveTab('manual')} className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all ${activeTab === 'manual' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
-            <Plus size={20} /> Manuel Veri Ekle
-          </button>
-        </div>
-
-        {activeTab === 'csv' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-[#111827] rounded-3xl border-2 border-dashed border-gray-700 p-12 text-center group hover:border-blue-500/50 transition-colors">
-                <Upload className="w-16 h-16 text-gray-500 mx-auto mb-4 group-hover:text-blue-400 transition-colors" />
-                <h3 className="text-xl font-bold text-white mb-2">Dosya Yükleme Paneli</h3>
-                <p className="text-gray-500 mb-6 text-sm italic">Sadece .csv, .xlsx ve .xls dosyaları desteklenir.</p>
-
-                <input type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" onChange={handleFileUpload} className="hidden" id="csvInput" />
-                <label htmlFor="csvInput" className="inline-block px-8 py-3 bg-white text-black font-bold rounded-xl cursor-pointer hover:bg-blue-50 transition-all shadow-xl">
-                  Dosyaları Seçin
-                </label>
-
-                {csvFile && (
-                  <div className="mt-6 p-4 bg-blue-600/10 border border-blue-500/20 rounded-2xl">
-                    <p className="text-blue-400 text-sm font-semibold italic">📍 Seçili: {csvFile.name}</p>
-                    <button onClick={handleCSVSubmit} className="mt-4 w-full py-2 bg-blue-600 rounded-lg text-white font-bold">Yüklemeyi Tamamla</button>
-                  </div>
-                )}
-            </div>
-
-            <div className="bg-[#111827] rounded-3xl border border-white/5 p-8">
-                <h3 className="text-lg font-bold text-white mb-6">Standart Veri Formatı</h3>
-                <div className="bg-black/40 rounded-xl p-4 mb-6 font-mono text-[11px] text-blue-300">
-                    tarih,saat,konum,uretim,tuketim,solar,ruzgar<br/>
-                    2026-05-11,14:00,Istanbul,1200,980,650,550
-                </div>
-                <div className="space-y-3 opacity-70">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Veri Kuralları</p>
-                    <ul className="text-sm text-gray-400 space-y-2 italic">
-                        <li>• Sayısal veriler ondalık ise nokta (.) kullanın.</li>
-                        <li>• Konum isimleri veritabanındakiyle eşleşmelidir.</li>
-                    </ul>
-                </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-[#111827] rounded-3xl border border-white/5 p-8">
-            <h3 className="text-xl font-bold text-white mb-8">Yeni Veri Formu</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Manuel Veri Formu */}
+        <div className="bg-[#111827] rounded-3xl border border-white/5 p-8">
+          <h3 className="text-xl font-bold text-white mb-8">Yeni Veri Formu</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tarih Seçimi</label>
                   <input type="date" value={manualData.tarih} onChange={(e) => handleManualInputChange('tarih', e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 outline-none transition-all" />
@@ -278,8 +206,7 @@ const DataImportPage: React.FC = () => {
             <button onClick={handleManualSubmit} className="mt-10 px-10 py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl flex items-center gap-2 transition-all shadow-lg shadow-green-900/20 active:scale-95">
                 <Plus size={20} /> Veriyi Sisteme Kaydet
             </button>
-          </div>
-        )}
+        </div>
 
         {/* Kayıt Geçmişi - Dinamik */}
         <div className="mt-12 bg-[#111827] rounded-3xl border border-white/5 overflow-hidden">

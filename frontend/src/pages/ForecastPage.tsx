@@ -35,14 +35,8 @@ const ForecastPage: React.FC = () => {
       try {
         setLoading(true);
 
-        const endDate = new Date();
-        const startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - 6);
-
-        const start = startDate.toISOString().split('T')[0];
-        const end = endDate.toISOString().split('T')[0];
-
-        const data = await energyService.getAll({ startDate: start, endDate: end });
+        // Tüm verileri getir
+        const data = await energyService.getAll();
 
         const formattedData: ForecastData[] = data.map((item: any) => {
           const date = new Date(item.timestamp);
