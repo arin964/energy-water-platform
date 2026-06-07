@@ -55,7 +55,7 @@ energy-water-platform/
 │
 ├── 📁 ml-service/                  ✅ Python + FastAPI + ML
 │   ├── Dockerfile                  ✅
-│   ├── requirements.txt            ✅ TensorFlow, Prophet, XGBoost
+│   ├── requirements.txt            ✅ TensorFlow, Prophet
 │   └── app/
 │       ├── main.py                 ✅ FastAPI app
 │       ├── config.py               ✅ Settings
@@ -200,7 +200,6 @@ docker-compose up -d
 - FastAPI (Web framework)
 - TensorFlow (LSTM models)
 - Prophet (Time series)
-- XGBoost (ML model)
 - NumPy/Pandas (Data processing)
 
 ---

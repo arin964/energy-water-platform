@@ -3,7 +3,7 @@ import { sequelize } from '../config/database';
 
 interface ModelMetricsAttributes {
   id: number;
-  modelType: 'LSTM' | 'Prophet' | 'XGBoost';
+  modelType: 'LSTM' | 'Prophet';
   targetVariable: 'energy' | 'water' | 'dam';
   rmse: number;
   mae: number;
@@ -23,7 +23,7 @@ interface ModelMetricsCreationAttributes extends Optional<ModelMetricsAttributes
 
 class ModelMetrics extends Model<ModelMetricsAttributes, ModelMetricsCreationAttributes> implements ModelMetricsAttributes {
   public id!: number;
-  public modelType!: 'LSTM' | 'Prophet' | 'XGBoost';
+  public modelType!: 'LSTM' | 'Prophet';
   public targetVariable!: 'energy' | 'water' | 'dam';
   public rmse!: number;
   public mae!: number;
@@ -48,7 +48,7 @@ ModelMetrics.init(
       primaryKey: true,
     },
     modelType: {
-      type: DataTypes.ENUM('LSTM', 'Prophet', 'XGBoost'),
+      type: DataTypes.ENUM('LSTM', 'Prophet'),
       allowNull: false,
     },
     targetVariable: {

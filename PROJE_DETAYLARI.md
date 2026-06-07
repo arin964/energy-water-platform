@@ -373,13 +373,7 @@ Where:
 - [ ] Tatil ve özel günlerin eklenmesi
 - [ ] Model eğitimi ve değerlendirmesi
 
-#### Hafta 8: XGBoost Modeli
-- [ ] XGBoost model oluşturma
-- [ ] Feature importance analizi
-- [ ] Model eğitimi ve tuning
-- [ ] Ensemble model denemesi
-
-#### Hafta 9: Model Karşılaştırması
+#### Hafta 8: Model Karşılaşltırması
 - [ ] Tüm modellerin performans metrikleri
 - [ ] RMSE, MAE, MAPE, R² karşılaştırması
 - [ ] En iyi model seçimi
@@ -463,7 +457,7 @@ Where:
 
 ### Potansiyel Yayınlar
 1. "Integrated AI-based Energy-Water Resource Management Platform for Turkey"
-2. "Comparative Analysis of LSTM, Prophet, and XGBoost for Solar Energy Prediction"
+2. "LSTM and Prophet-based Forecasting for Solar Energy and Water Consumption Prediction"
 3. "Dam Level Forecasting Using Deep Learning: A Case Study in Turkey"
 
 ---

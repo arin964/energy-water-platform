@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS optimization_scenarios (
 -- Create model_metrics table
 CREATE TABLE IF NOT EXISTS model_metrics (
     id SERIAL PRIMARY KEY,
-    model_type VARCHAR(20) CHECK (model_type IN ('LSTM', 'Prophet', 'XGBoost')),
+    model_type VARCHAR(20) CHECK (model_type IN ('LSTM', 'Prophet')),
     target_variable VARCHAR(20) CHECK (target_variable IN ('energy', 'water', 'dam')),
     rmse FLOAT NOT NULL,
     mae FLOAT NOT NULL,

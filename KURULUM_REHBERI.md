@@ -123,7 +123,7 @@ energy-water-platform/
 │   └── package.json
 ├── ml-service/          # Python/FastAPI ML Servisi
 │   ├── app/
-│   │   ├── models/      # LSTM, Prophet, XGBoost modelleri
+│   │   ├── models/      # LSTM, Prophet modelleri
 │   │   ├── routes/      # ML API endpoints
 │   │   └── services/    # ML iş mantığı
 │   └── requirements.txt

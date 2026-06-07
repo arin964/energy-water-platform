@@ -168,7 +168,7 @@ energy-water-platform/
    - Bağımsız: `inflow`, `outflow`, `rainfall`
 
 4. **forecasts** - Tahmin sonuçları
-   - LSTM, Prophet, XGBoost model çıktıları
+   - LSTM, Prophet model çıktıları
 
 5. **optimization_scenarios** - Optimizasyon senaryoları ⭐ YENİ
    - 5 farklı senaryo tipi
@@ -194,10 +194,6 @@ energy-water-platform/
 - **Kullanım**: Mevsimsel trend analizi
 - **Özellik**: Tatil etkisi, mevsimsellik
 - **Framework**: Meta's Prophet
-
-### 3. XGBoost
-- **Kullanım**: Hızlı tahminler, feature importance
-- **Avantaj**: Hızlı eğitim, iyi performans
 
 ---
 
@@ -236,7 +232,6 @@ Platformda 5 temel senaryo analizi yapılacak:
 ### Faz 2: Model Geliştirme
 - [ ] LSTM modelini eğitin
 - [ ] Prophet modelini test edin
-- [ ] XGBoost modelini optimize edin
 - [ ] Model karşılaştırması yapın
 
 ### Faz 3: Optimizasyon
