@@ -30,8 +30,8 @@ const WaterPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch water data (last 7 days)
-      const endDate = new Date();
+      // Fetch water data (last 7 days from the latest data point)
+      const endDate = new Date('2026-05-31T23:59:59Z');
       const startDate = new Date(endDate);
       startDate.setDate(startDate.getDate() - 6);
 

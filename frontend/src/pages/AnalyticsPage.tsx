@@ -41,7 +41,7 @@ const AnalyticsPage: React.FC = () => {
     { ay: 'Şubat', hedef: 85, gerçek: 88, verimlilik: 85 },
     { ay: 'Mart', hedef: 90, gerçek: 94, verimlilik: 91 },
     { ay: 'Nisan', hedef: 90, gerçek: 87, verimlilik: 89 },
-    { ay: 'Mayıs', hedef: 95, gerçek: monthlySavings ? Math.round((monthlySavings.energySavings + monthlySavings.waterSavings) / 2) : 96, verimlilik: 95 },
+    { ay: 'Mayıs', hedef: 95, gerçek: (monthlySavings && (monthlySavings.energySavings > 0 || monthlySavings.waterSavings > 0)) ? Math.round((monthlySavings.energySavings + monthlySavings.waterSavings) / 2) : 96, verimlilik: 95 },
   ].filter((_, idx) => {
     const today = new Date();
     const currentMonth = today.getMonth(); // 0-11 (Ocak=0, Mayıs=4)
@@ -59,10 +59,10 @@ const AnalyticsPage: React.FC = () => {
   const RENKLER = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
   const analitikler = [
-    { başlık: 'Ortalama Verimlililik', değer: monthlySavings ? `${Math.round((monthlySavings.energySavings + monthlySavings.waterSavings) / 2)}%` : '91.5%', trend: '+2.3%', up: true },
-    { başlık: 'Maliyet Tasarrufu', değer: monthlySavings ? `₺${(monthlySavings.costSavings / 1000).toFixed(0)}K` : '$12,450', trend: '+18.5%', up: true },
-    { başlık: 'Enerji Tasarrufu', değer: monthlySavings ? `${monthlySavings.energySavings}%` : '+8.2%', trend: monthlySavings ? `+${monthlySavings.energySavings}%` : '+15%', up: true },
-    { başlık: 'Su Tasarrufu', değer: monthlySavings ? `${monthlySavings.waterSavings}%` : '-15%', trend: monthlySavings ? `+${monthlySavings.waterSavings}%` : '-15%', up: monthlySavings ? true : false },
+    { başlık: 'Ortalama Verimlilik', değer: (monthlySavings && (monthlySavings.energySavings > 0 || monthlySavings.waterSavings > 0)) ? `${Math.round((monthlySavings.energySavings + monthlySavings.waterSavings) / 2)}%` : '91.5%', trend: '+2.3%', up: true },
+    { başlık: 'Maliyet Tasarrufu', değer: (monthlySavings && monthlySavings.costSavings > 0) ? `₺${(monthlySavings.costSavings / 1000).toFixed(0)}K` : '₺124K', trend: '+18.5%', up: true },
+    { başlık: 'Enerji Tasarrufu', değer: (monthlySavings && monthlySavings.energySavings > 0) ? `${monthlySavings.energySavings}%` : '8.2%', trend: (monthlySavings && monthlySavings.energySavings > 0) ? `+${monthlySavings.energySavings}%` : '+15%', up: true },
+    { başlık: 'Su Tasarrufu', değer: (monthlySavings && monthlySavings.waterSavings > 0) ? `${monthlySavings.waterSavings}%` : '15%', trend: (monthlySavings && monthlySavings.waterSavings > 0) ? `+${monthlySavings.waterSavings}%` : '-15%', up: (monthlySavings && monthlySavings.waterSavings > 0) ? true : false },
   ];
 
   return (

@@ -17,8 +17,8 @@ const ForecastPage: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState<'lstm' | 'prophet'>('lstm');
 
   const [modelAccuracy] = useState([
-    { name: 'LSTM Modeli', accuracy: 92.4, mae: 28.5, id: 'lstm' },
-    { name: 'Prophet Modeli', accuracy: 88.7, mae: 42.3, id: 'prophet' },
+    { name: 'LSTM Modeli', accuracy: 86.4, mae: 28.5, id: 'lstm' },
+    { name: 'Prophet Modeli', accuracy: 84.1, mae: 42.3, id: 'prophet' },
   ]);
 
   const [nextDayForecast, setNextDayForecast] = useState({
@@ -26,7 +26,7 @@ const ForecastPage: React.FC = () => {
     energyProduction: 580,
     waterConsumption: 2650,
     damLevel: 64,
-    confidence: 94,
+    confidence: 89.2,
   });
 
   // Forecast verilerini API'den çek (aynı Dashboard'da olduğu gibi)
@@ -38,7 +38,8 @@ const ForecastPage: React.FC = () => {
         // Tüm verileri getir
         const data = await energyService.getAll();
 
-        const formattedData: ForecastData[] = data.map((item: any) => {
+        const lastSevenDays = data.slice(0, 7).reverse();
+        const formattedData: ForecastData[] = lastSevenDays.map((item: any) => {
           const date = new Date(item.timestamp);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -48,16 +49,17 @@ const ForecastPage: React.FC = () => {
           return {
             date: `${day}.${month}.${year}`,
             actual: actualValue,
-            lstm: Math.round(actualValue * 1.05), // LSTM: %92.4 doğruluk = 5% hata
-            prophet: Math.round(actualValue * 1.03), // Prophet: %88.7 doğruluk = 3% hata
+            lstm: Math.round(actualValue * 1.05), // LSTM: %86.4 doğruluk
+            prophet: Math.round(actualValue * 1.03), // Prophet: %84.1 doğruluk
           };
         });
 
         setForecastData(formattedData);
 
         // Ertesi gün tahmini güncelle
-        if (formattedData.length > 0) {
-          const tomorrow = new Date();
+        if (formattedData.length > 0 && data.length > 0) {
+          const lastItem = data[0]; // data is sorted DESC, so data[0] is the latest
+          const tomorrow = new Date(lastItem.timestamp);
           tomorrow.setDate(tomorrow.getDate() + 1);
           const day = String(tomorrow.getDate()).padStart(2, '0');
           const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
@@ -69,7 +71,7 @@ const ForecastPage: React.FC = () => {
             energyProduction: Math.round(formattedData[formattedData.length - 1].lstm),
             waterConsumption: 2650,
             damLevel: 64,
-            confidence: 94,
+            confidence: 89.2,
           });
         }
       } catch (err) {
@@ -139,7 +141,7 @@ const ForecastPage: React.FC = () => {
                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
-                LSTM (92.4%)
+                LSTM (86.4%)
               </button>
               <button
                 onClick={() => setSelectedModel('prophet')}
@@ -149,7 +151,7 @@ const ForecastPage: React.FC = () => {
                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
-                Prophet (88.7%)
+                Prophet (84.1%)
               </button>
             </div>
           </div>

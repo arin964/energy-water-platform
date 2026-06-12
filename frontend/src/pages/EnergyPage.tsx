@@ -25,6 +25,7 @@ const EnergyPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadingSources, setLoadingSources] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fullData, setFullData] = useState<any[]>([]);
 
   // Enerji verisini sil
   const handleDeleteEnergy = async (id: number) => {
@@ -91,7 +92,8 @@ const EnergyPage: React.FC = () => {
         const data = await energyService.getAll();
 
         // TÜM KAYITLARI GÖSTER - GRUPLAMAMA
-        const formattedData: ChartData[] = data
+        const lastSevenDays = data.slice(0, 7);
+        const formattedData: ChartData[] = lastSevenDays
           .filter((item: any) => item.energyProduced !== null && item.energyProduced !== undefined)
           .map((item: any) => {
             const date = new Date(item.timestamp);
@@ -112,12 +114,14 @@ const EnergyPage: React.FC = () => {
               date: `${day}.${month}.${year}`,
               production: Math.round(item.energyProduced),
               solar: Math.round(item.solarRadiation || 0),
+              windSpeed: item.windSpeed || 0,
               source: sourceNames[item.source] || item.source || 'Bilinmeyen',
             };
           })
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-        setChartData(formattedData);
+        setFullData(data); // 5 aylık tüm veri
+        setChartData(formattedData); // Sadece grafik için 7 günlük veri
       } catch (err) {
         console.error('Hata:', err);
         setError('Veri yüklenemedi');
@@ -131,62 +135,61 @@ const EnergyPage: React.FC = () => {
 
   // Kaynağa göre veri çek
   useEffect(() => {
-    const fetchEnergyBySource = async () => {
-      try {
-        setLoadingSources(true);
-        
-        const response = await fetch('http://localhost:5000/api/energy/sources?days=30');
-        const result = await response.json();
-        
-        if (result.success && result.sources) {
-          const sourceNames: Record<string, string> = {
-            'Solar': 'Solar',
-            'Wind': 'Rüzgar',
-            'Hydro': 'Hidrolik',
-            'Other': 'Diğer',
-          };
-          
-          const translatedSources = result.sources.map((src: any) => ({
-            source: sourceNames[src.source] || src.source,
-            value: src.value,
-            percentage: src.percentage,
-          }));
-          
-          setEnergyBySource(translatedSources);
-        }
-      } catch (err) {
-        console.error('Hata:', err);
-        setEnergyBySource([
-          { source: 'Solar', value: 2480, percentage: 65 },
-          { source: 'Rüzgar', value: 900, percentage: 23 },
-          { source: 'Hidrolik', value: 440, percentage: 12 },
-        ]);
-      } finally {
-        setLoadingSources(false);
-      }
-    };
-
-    fetchEnergyBySource();
-  }, []);
+    if (chartData.length === 0) return;
+    
+    let totalSolar = 0;
+    let totalWind = 0;
+    let totalHydro = 0;
+    let totalEnergy = 0;
+    
+    chartData.forEach(item => {
+      // In the database, solar_radiation = solar_prod * 5
+      const solarProd = item.solar / 5;
+      // Convert wind speed to energy (approx wind_speed * 25 for scale)
+      const windProd = item.windSpeed * 25;
+      const hydroProd = Math.max(0, item.production - solarProd - windProd);
+      
+      totalSolar += solarProd;
+      totalWind += windProd;
+      totalHydro += hydroProd;
+      totalEnergy += item.production;
+    });
+    
+    if (totalEnergy > 0) {
+      setEnergyBySource([
+        { source: 'Solar', value: Math.round(totalSolar), percentage: Math.round((totalSolar / totalEnergy) * 100) },
+        { source: 'Rüzgar', value: Math.round(totalWind), percentage: Math.round((totalWind / totalEnergy) * 100) },
+        { source: 'Hidrolik', value: Math.round(totalHydro), percentage: Math.round((totalHydro / totalEnergy) * 100) },
+        { source: 'Diğer', value: 0, percentage: 0 }
+      ]);
+    }
+  }, [chartData]);
 
   const getStats = () => {
-    if (chartData.length === 0) {
+    if (fullData.length === 0) {
       return [
-        { label: 'Toplam Üretim (7 Gün)', value: '0 MWh', change: '-' },
+        { label: 'Toplam Üretim (5 Ay)', value: '0 MWh', change: '-' },
         { label: 'Ortalama Günlük', value: '0 MWh', change: '-' },
         { label: 'Pik Üretim', value: '0 MWh', change: '-' },
         { label: 'Solar Payı', value: '0%', change: '-' },
       ];
     }
 
-    const totalProduction = chartData.reduce((sum, item) => sum + item.production, 0);
-    const avgProduction = Math.round(totalProduction / chartData.length);
-    const maxProduction = Math.max(...chartData.map(item => item.production));
-    const maxDate = chartData.find(item => item.production === maxProduction)?.date || '-';
-    const solarPercentage = Math.round((totalProduction / (totalProduction + 900 + 440)) * 100);
+    const totalProduction = fullData.reduce((sum, item) => sum + Math.round(item.energyProduced), 0);
+    const avgProduction = Math.round(totalProduction / fullData.length);
+    const maxProduction = Math.max(...fullData.map(item => Math.round(item.energyProduced)));
+    const maxDateItem = fullData.find(item => Math.round(item.energyProduced) === maxProduction);
+    const maxDate = maxDateItem ? `${String(new Date(maxDateItem.timestamp).getDate()).padStart(2, '0')}.${String(new Date(maxDateItem.timestamp).getMonth() + 1).padStart(2, '0')}.${new Date(maxDateItem.timestamp).getFullYear()}` : '-';
+    
+    // Calculate total solar for the 5 month period to get the solar percentage
+    let totalSolarFull = 0;
+    fullData.forEach(item => {
+      totalSolarFull += (item.solarRadiation / 5);
+    });
+    const solarPercentage = totalProduction > 0 ? Math.round((totalSolarFull / totalProduction) * 100) : 0;
 
     return [
-      { label: 'Toplam Üretim (7 Gün)', value: `${totalProduction} MWh`, change: `+${totalProduction}` },
+      { label: 'Toplam Üretim (5 Ay)', value: `${totalProduction} MWh`, change: `+${totalProduction}` },
       { label: 'Ortalama Günlük', value: `${avgProduction} MWh`, change: `+${avgProduction}` },
       { label: 'Pik Üretim', value: `${maxProduction} MWh`, change: maxDate },
       { label: 'Solar Payı', value: `${solarPercentage}%`, change: `+${solarPercentage}%` },
@@ -200,7 +203,7 @@ const EnergyPage: React.FC = () => {
       <div className="p-8 max-w-7xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Enerji Yönetimi</h1>
-          <p className="text-gray-400">Enerji üretim ve tüketim analizi (Son 7 Gün)</p>
+          <p className="text-gray-400">Enerji üretim ve tüketim analizi</p>
         </div>
 
         {error && (

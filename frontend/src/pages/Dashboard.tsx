@@ -18,6 +18,7 @@ const Dashboard: React.FC = () => {
 
   // Zamanın her dakika otomatik güncellenmesi için state tetikleyici
   const [now, setNow] = useState(new Date());
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -71,19 +72,37 @@ const Dashboard: React.FC = () => {
         // Tüm verileri getir - tarih filtresi yok
         const data = await energyService.getAll();
 
-        // Veriyi grafik için uygun formata dönüştür
-        const formattedData = data.map((item: any) => {
+        // Veriyi grafik için aylık ortalamalara dönüştür
+        const monthlyData = new Map<string, { energyTotal: number, solarTotal: number, count: number, monthNum: number, yearNum: number }>();
+
+        data.forEach((item: any) => {
           const date = new Date(item.timestamp);
-          const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
+          const key = `${month}.${year}`;
           
-          return {
-            date: `${day}.${month}.${year}`,
-            energy: Math.round(item.energyProduced),
-            solar: Math.round(item.solarRadiation),
-          };
+          if (!monthlyData.has(key)) {
+            monthlyData.set(key, { energyTotal: 0, solarTotal: 0, count: 0, monthNum: date.getMonth(), yearNum: year });
+          }
+          
+          const current = monthlyData.get(key)!;
+          current.energyTotal += item.energyProduced;
+          current.solarTotal += item.solarRadiation || 0;
+          current.count += 1;
         });
+
+        const formattedData = Array.from(monthlyData.entries())
+          .map(([key, value]) => ({
+            date: key,
+            energy: Math.round(value.energyTotal / value.count),
+            solar: Math.round(value.solarTotal / value.count),
+            monthNum: value.monthNum,
+            yearNum: value.yearNum
+          }))
+          .sort((a, b) => {
+            if (a.yearNum !== b.yearNum) return a.yearNum - b.yearNum;
+            return a.monthNum - b.monthNum;
+          });
 
         setChartData(formattedData);
       } catch (err) {

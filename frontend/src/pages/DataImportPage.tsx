@@ -31,10 +31,34 @@ const DataImportPage: React.FC = () => {
   const [manualData, setManualData] = useState<EnergyDataInput>(emptyForm);
   const [customLocation, setCustomLocation] = useState(false);
 
-  // Sayfa yüklendiğinde localStorage'dan mevcut verileri çek
+  // Sayfa yüklendiğinde API'den mevcut verileri çek
   useEffect(() => {
-    const savedData = JSON.parse(localStorage.getItem('importedEnergyData') || '[]');
-    setImportedData(savedData);
+    const fetchRecentData = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/energy');
+        const data = await response.json();
+        if (data.success && data.data) {
+          // Son 20 kaydı al ve formatla
+          const recentData = data.data.slice(0, 20).map((item: any, index: number) => {
+            const date = new Date(item.timestamp);
+            return {
+              id: item.id || index,
+              tarih: `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`,
+              saat: `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
+              konum: item.location || 'Bilinmiyor',
+              uretim: Math.round(item.energyProduced),
+              tuketim: 2650, // Sabit örnek değer
+              solar: Math.round(item.solarRadiation || 0)
+            };
+          });
+          setImportedData(recentData);
+        }
+      } catch (err) {
+        console.error('Veri çekme hatası:', err);
+      }
+    };
+    
+    fetchRecentData();
   }, []);
 
   // Manuel Veri Girişi Değişiklik Yönetimi
